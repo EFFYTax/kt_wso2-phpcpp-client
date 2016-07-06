@@ -161,7 +161,7 @@ void WSClient :: request() {
 	{
 		string fault = get_soap_fault_msg() ;
 
-		throw Php::Exception(fault);
+		throw Php::Exception(fault );
 
 	}
 	else if(_response_payload)
@@ -966,27 +966,36 @@ Php::Value WSClient :: set_wspolicy(Php::Parameters &params)
 	return this;
 }
 
+/**
+ *
+ */
 Php::Value WSClient :: get_wsmessage()
 {
 	return Php::Object("WSMessage", _wsmessage);
 }
 
+/**
+ *
+ */
 Php::Value WSClient :: get_wssectoken()
 {
 	return Php::Object("WSSecurityToken", _wssectoken);
 }
 
+/**
+ *
+ */
 Php::Value WSClient :: get_wspolicy()
 {
 	return Php::Object("WSPolicy", _wspolicy);
 }
 
+/**
+ *
+ */
 Php::Value WSClient :: get_debug() {
 
 	Php::out << "----- DEBUG -----" << endl;
 
 	return _wsmessage->_fault->get<string>();
 }
-
-
-
