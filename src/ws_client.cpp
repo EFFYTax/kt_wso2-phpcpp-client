@@ -143,32 +143,43 @@ void WSClient :: request() {
 		//TODO: implmement sequence and rm_spec_version
 	}
 
-	status_code = axis2_svc_client_get_http_status_code(_svc_client, _env);
-
-	string error_msg   = axutil_error_get_message(_env->error);
-	axis2_status_t       error_code  = axutil_error_get_status_code(_env->error);
+	status_code 		        = axis2_svc_client_get_http_status_code(_svc_client, _env);
+	string          error_msg   = axutil_error_get_message(_env->error);
+	axis2_status_t  error_code  = axutil_error_get_status_code(_env->error);
 
 	log("http status code :: " + std::to_string(status_code), __FILE__,__LINE__);
 
 	//REST
-	if((status_code != 200) && (status_code != 202) && !_use_soap)
+	if(!_use_soap)
 	{
-		throw Php::Exception("Fault");
+		if(status_code != 200 && status_code != 202)
+		{
+			throw Php::Exception("REST Fault");
+		}
 	}
 
-
-	if(has_soap_fault())
+	//The SOAP Request is faulty
+	else if(has_soap_fault())
 	{
-		string fault = get_soap_fault_msg() ;
+		Axis2Client::FaultType fault = get_soap_fault_msg();
 
-		throw Php::Exception(fault );
-
+		//Strong limitation of PHP-CPP which is not yet able to throw custom Exception.
+		//As a workaround just use the
+		throw Php::Exception( fault.node, status_code );
 	}
+
+	//Soap response
 	else if(_response_payload)
 	{
 		_wsmessage->_response = get_response_msg();
 
 		return ;
+	}
+
+	//
+	else
+	{
+		log("Issue", __FILE__,__LINE__);
 	}
 };
 

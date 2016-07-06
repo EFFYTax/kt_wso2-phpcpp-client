@@ -832,6 +832,8 @@ axis2_endpoint_ref_t * Axis2Client :: add_endpoint_values_ref(map<string, vector
 /**
  * Set Rampart Options from WSSecToken Object.
  *
+ * Only support UsernameToken and Certificate
+ *
  * @access private
  * @return boolean
  *
@@ -905,8 +907,6 @@ bool Axis2Client :: add_rampart_options()
 
 		log("RAMPART :: Setting password " + _wssectoken->_password, __FILE__,__LINE__);
 	}
-
-
 
 	//TODO: Implement Password Callback      @wsf_policy.c:622
 	//TODO: Implement PCKS12 KeyStore        @wsf_policy.c:638
@@ -1178,38 +1178,173 @@ string Axis2Client :: get_response_msg()
 }
 
 /**
+ *
+ */
+string Axis2Client::get_soap_fault_detail(axiom_node_t *detail_node, axiom_element_t *detail_element)
+{
+	axis2_char_t * detail_string 	 = nullptr;
+	axiom_node_t * detail_entry_node = nullptr;
+
+	if(detail_node)
+	{
+		detail_entry_node = axiom_node_get_first_element(detail_node, _env);
+		if(detail_entry_node)
+		{
+			detail_string = axiom_node_to_string(detail_entry_node, _env);
+
+			if(detail_string) { _env->allocator->free_fn(_env->allocator, detail_string); }
+		}
+	}
+
+	return detail_string;
+}
+
+/**
+ *
+ */
+string Axis2Client::get_soap_fault_reason(axiom_node_t *reason_node, axiom_element_t *reason_element)
+{
+	axis2_char_t *text_value = NULL;
+
+	if([this]()->int { return _soap_version == 1.1 ? 1 : 2; }() == AXIOM_SOAP12)
+	{
+		axiom_node_t 	* text_node 	= nullptr;
+		axiom_element_t * text_element 	= nullptr;
+
+		text_element = axiom_element_get_first_element(reason_element, _env, reason_node, &text_node);
+		if(text_element)
+		{
+			text_value = axiom_element_get_text(text_element, _env, text_node);
+		}
+	}
+	else if([this]()->int { return _soap_version == 1.1 ? 1 : 2; }() == AXIOM_SOAP11)
+	{
+		text_value = axiom_element_get_text(reason_element, _env, reason_node);
+	}
+
+	return text_value;
+}
+
+/**
+ *
+ */
+string Axis2Client::get_soap_fault_code(axiom_node_t *code_node, axiom_element_t *code_element)
+{
+	axiom_node_t    * code_value_node = nullptr;
+	axiom_element_t * code_value_ele  = nullptr;
+	char 			* code			  = nullptr;
+
+	if([this]()->int { return _soap_version == 1.1 ? 1 : 2; }() == AXIOM_SOAP12)
+	{
+		code_value_ele = axiom_element_get_first_element(code_element, _env, code_node, &code_value_node);
+		code 		   = axiom_element_get_text(code_value_ele, _env, code_value_node);
+	}
+	else if([this]()->int { return _soap_version == 1.1 ? 1 : 2; }() == AXIOM_SOAP11)
+	{
+		code 		   = axiom_element_get_text(code_element, _env, code_node);
+	}
+
+	return code;
+}
+
+
+
+/**
+ *
+ */
+Axis2Client::FaultType Axis2Client::handle_soap_fault(axiom_soap_fault_t * soap_fault)
+{
+	FaultType fault;
+
+	if(soap_fault)
+	{
+		axiom_node_t 		      * fault_node  = nullptr;
+		axiom_soap_fault_code_t   * fault_code	= nullptr;
+
+		fault_node = axiom_soap_fault_get_base_node(soap_fault, _env);
+
+		if(fault_node)
+		{
+			fault.node = (string)axiom_node_to_string (fault_node, _env);
+
+			axiom_element_t  				* fault_element = nullptr;
+			axiom_child_element_iterator_t  * ele_iterator 	= nullptr;
+
+			fault_element = (axiom_element_t *)axiom_node_get_data_element(fault_node, _env);
+			ele_iterator  = axiom_element_get_child_elements(fault_element, _env, fault_node);
+
+			if(ele_iterator)
+			{
+				axiom_node_t     * node    = nullptr;
+				axiom_element_t  * element = nullptr;
+
+				while(axiom_child_element_iterator_has_next(ele_iterator, _env))
+				{
+					node = axiom_child_element_iterator_next(ele_iterator, _env);
+					if(node)
+					{
+						element = (axiom_element_t *) axiom_node_get_data_element(node, _env);
+
+						if(element)
+						{
+							char * localname = nullptr;
+							localname        = axiom_element_get_localname(element, _env);
+
+							if(localname)
+							{
+								if      (std::strcmp(localname, AXIOM_SOAP12_SOAP_FAULT_CODE_LOCAL_NAME)   == 0) { fault.code   = get_soap_fault_code(node, element);   }
+								else if (std::strcmp(localname, AXIOM_SOAP11_SOAP_FAULT_CODE_LOCAL_NAME)   == 0) { fault.code   = get_soap_fault_code(node, element);   }
+								else if (std::strcmp(localname, AXIOM_SOAP12_SOAP_FAULT_REASON_LOCAL_NAME) == 0) { fault.reason = get_soap_fault_reason(node, element); }
+								else if (std::strcmp(localname, AXIOM_SOAP11_SOAP_FAULT_STRING_LOCAL_NAME) == 0) { fault.reason = get_soap_fault_reason(node, element); }
+								else if (std::strcmp(localname, AXIOM_SOAP12_SOAP_FAULT_DETAIL_LOCAL_NAME) == 0 ||
+										 std::strcmp(localname, AXIOM_SOAP11_SOAP_FAULT_DETAIL_LOCAL_NAME)) 	 { fault.details = get_soap_fault_reason(node, element); }
+								else if (std::strcmp(localname, AXIOM_SOAP12_SOAP_FAULT_ROLE_LOCAL_NAME)   == 0 ||
+										 std::strcmp(localname, AXIOM_SOAP11_SOAP_FAULT_ACTOR_LOCAL_NAME)) 	     { fault.details = get_soap_fault_reason(node, element); }
+
+							}
+						}
+					}
+				}//
+			}
+		}
+	}
+
+	return fault;
+}
+
+/**
  * Get the latest fault message
  *
  * @access protected
  * @return string
  */
-string Axis2Client :: get_soap_fault_msg()
+Axis2Client::FaultType Axis2Client :: get_soap_fault_msg()
 {
-	axiom_soap_envelope_t *soap_envelope = nullptr;
-	axiom_soap_body_t     *soap_body     = nullptr;
-	axiom_soap_fault_t    *soap_fault 	 = nullptr;
-	axis2_char_t 	      *res_text 	 = nullptr;
+	FaultType                 fault;
+	axiom_soap_envelope_t   * soap_envelope   = nullptr;
+	axiom_soap_body_t       * soap_body       = nullptr;
+	axiom_soap_fault_t      * soap_fault 	  = nullptr;
+	axis2_char_t 	        * res_text 	      = nullptr;
 
 	soap_envelope = axis2_svc_client_get_last_response_soap_envelope (_svc_client, _env);
 
-	if(soap_envelope) 	{ soap_body = axiom_soap_envelope_get_body (soap_envelope, _env); 	}
-	if(soap_body)     	{ soap_fault = axiom_soap_body_get_fault (soap_body, _env); 		}
-	if(soap_fault)
+	if(soap_envelope)
 	{
-		int soap_version = 0;
+		soap_body  = axiom_soap_envelope_get_body (soap_envelope, _env);
 
-		axiom_node_t *fault_node   = nullptr;
-
-		soap_version = axis2_options_get_soap_version(_client_options, _env);
-		fault_node   = axiom_soap_fault_get_base_node(soap_fault, _env);
-
-		if(fault_node)
+		if(soap_body)
 		{
-			res_text = axiom_node_to_string ( fault_node, _env);
-			string response(res_text);
-			return response;
+			soap_fault = axiom_soap_body_get_fault (soap_body, _env);
+
+			fault = handle_soap_fault(soap_fault);
 		}
 	}
 
-	return "soap fault thrown - but response is null / SOAP enabled ?";
+	log("Fault Node "    + fault.node,     __FILE__,__LINE__);
+	log("Fault code "    + fault.code,     __FILE__,__LINE__);
+	log("Fault reason "  + fault.reason,   __FILE__,__LINE__);
+	log("Fault details " + fault.details,  __FILE__,__LINE__);
+	log("Fault role "    + fault.role,     __FILE__,__LINE__);
+
+	return fault;
 }

@@ -25,10 +25,27 @@ class Axis2Client
 
 	typedef map<string, vector<string>> MAP;
 
+public:
+	struct FaultType {
+		string code    = "0";
+		string reason  = "";
+		string node    = "";
+		string details = "";
+		string role    = "";
+	};
+
+public:
+
+	Axis2Client();
+
+	virtual ~Axis2Client();
+
 private:
 
 	void create();
 	void enable_attachment_caching();
+
+
 
 	axis2_endpoint_ref_t	* add_endpoint_values_ref(MAP param);
 	bool                   	  add_rampart_options();
@@ -38,6 +55,11 @@ private:
 
 	//Big Hack...@see create_header_node
 	int _ns_index = 0;
+
+	FaultType handle_soap_fault(axiom_soap_fault_t * soap_fault);
+	string get_soap_fault_code(axiom_node_t *code_node, axiom_element_t *code_element);
+	string get_soap_fault_reason(axiom_node_t *reason_node, axiom_element_t *reason_element);
+	string get_soap_fault_detail(axiom_node_t *detail_node, axiom_element_t *detail_element);
 
 protected:
 
@@ -132,14 +154,8 @@ protected:
 	virtual bool       			  has_soap_fault();
 
 	//
-	virtual string  			  get_soap_fault_msg();
+	virtual FaultType  	  		  get_soap_fault_msg();
 	virtual string                get_response_msg();
-
-public:
-
-	Axis2Client();
-
-	virtual ~Axis2Client();
 };
 
 #endif
