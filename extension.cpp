@@ -20,53 +20,51 @@ extern "C" {
     {
         // static(!) Php::Extension object that should stay in memory
         // for the entire duration of the process (that's why it's static)
-        static Php::Extension ktwso2("ktwso2", "0.0.1");
+        static Php::Extension extension("ktwso2", "0.0.1");
         
+        //Put all objects inside a PHP Namespace
+        Php::Namespace ns("KTWS");
+
         // description of the class so that PHP knows which methods are accessible
-        Php::Class<WSClient>  	    wsclient("WSClient");
-        Php::Class<WSMessage> 	    wsmessage("WSMessage");
-        Php::Class<WSClientProxy>   wsclientproxy("WSClientProxy");
-        Php::Class<WSData> 		    wsdata("WSData");
-        Php::Class<WSFault> 	    wsfault("WSFault");
-        Php::Class<WSHeader> 	    wsheader("WSHeader");
-        Php::Class<WSPolicy> 	    wspolicy("WSPolicy");
-        Php::Class<WSUtils> 		wsutils("WSUtils");
-        Php::Class<WSSecurityToken> wssecuritytoken("WSSecurityToken");
+        Php::Class<WSClient>  	    wsclient        ("WSClient");
+        Php::Class<WSMessage> 	    wsmessage       ("WSMessage");
+        Php::Class<WSClientProxy>   wsclientproxy   ("WSClientProxy");
+        Php::Class<WSData> 		    wsdata          ("WSData");
+        Php::Class<WSFault> 	    wsfault         ("WSFault");
+        Php::Class<WSHeader> 	    wsheader        ("WSHeader");
+        Php::Class<WSPolicy> 	    wspolicy        ("WSPolicy");
+        Php::Class<WSUtils> 		wsutils         ("WSUtils");
+        Php::Class<WSSecurityToken> wssecuritytoken ("WSSecurityToken");
 
         // WSClient - Registering methods
-        wsclient.method("__construct", &WSClient::__construct);
-
-        wsclient.method("request", &WSClient::request);
-
-        wsclient.method("setMessage",  &WSClient::set_wsmessage);
-        wsclient.method("setSecToken", &WSClient::set_wssectoken);
-        wsclient.method("setPolicy",   &WSClient::set_wspolicy);
-
-        wsclient.method("getMessage",  &WSClient::get_wsmessage);
-        wsclient.method("getSecToken", &WSClient::get_wssectoken);
-        wsclient.method("getDebug",    &WSClient::get_debug);
-        wsclient.method("disableSoap", &WSClient::disable_soap);
+        wsclient.method<&WSClient::__construct>    ("__construct");
+        wsclient.method<&WSClient::request> 	   ("request");
+        wsclient.method<&WSClient::set_wsmessage>  ("setMessage");
+        wsclient.method<&WSClient::set_wssectoken> ("setSecToken");
+        wsclient.method<&WSClient::set_wspolicy>   ("setPolicy");
+        wsclient.method<&WSClient::get_wsmessage>  ("getMessage");
+        wsclient.method<&WSClient::get_wssectoken> ("getSecToken");
+        wsclient.method<&WSClient::disable_soap>   ("disableSoap");
 
         //Use WSA
-        wsclient.method("setWSA",           &WSClient::set_use_wsa);
+        wsclient.method<&WSClient::set_use_wsa>    ("setWSA");
 
         //Use SSL
-        wsclient.method("setSSLClientCert", &WSClient::set_client_cert);
-        wsclient.method("setSSLServerCert", &WSClient::set_server_cert);
-        wsclient.method("setSSLPassphrase", &WSClient::set_ssl_passphrase);
+        wsclient.method<&WSClient::set_client_cert>    ("setSSLClientCert");
+        wsclient.method<&WSClient::set_server_cert>    ("setSSLServerCert");
+        wsclient.method<&WSClient::set_ssl_passphrase> ("setSSLPassphrase");
 
         //Use HTTP Auth
-        wsclient.method("setHTTPUsername", &WSClient::set_http_auth_username);
-        wsclient.method("setHTTPPassword", &WSClient::set_http_auth_password);
-        wsclient.method("setHTTPAuth",     &WSClient::set_http_auth_type);
+        wsclient.method<&WSClient::set_http_auth_username> ("setHTTPUsername");
+        wsclient.method<&WSClient::set_http_auth_password> ("setHTTPPassword");
+        wsclient.method<&WSClient::set_http_auth_type>     ("setHTTPAuth");
 
         //Reliable
-        wsclient.method("setReliable",      &WSClient::set_ws_reliable);
-        wsclient.method("setSoapVersion",   &WSClient::set_soap_version);
+        wsclient.method<&WSClient::set_ws_reliable> 	   ("setReliable");
+        wsclient.method<&WSClient::set_soap_version>       ("setSoapVersion");
 
         //Timeout
-        wsclient.method("setTimeout",       &WSClient::set_timeout);
-
+        wsclient.method<&WSClient::set_timeout>            ("setTimeout");
 
         /**
          * Setter for WSClient
@@ -88,101 +86,104 @@ extern "C" {
 
 
         // WSMessage - Registering methods
-        wsmessage.method("__construct", &WSMessage::__construct, {
-        //	Php::ByVal("payload",    Php::Type::String, true),
-		//	Php::ByVal("properties", Php::Type::Array,  false),
-        });
+       wsmessage.method<&WSMessage::__construct> ("__construct");
 
-       wsmessage.method("setPayload", 				&WSMessage::set_payload);
-       wsmessage.method("setEndpoint",  			&WSMessage::set_endpoint);
-       wsmessage.method("setAction",  				&WSMessage::set_action);
-       wsmessage.method("setFrom",     				&WSMessage::set_from);
-       wsmessage.method("setReply",     			&WSMessage::set_reply_to);
-       wsmessage.method("setFault",     	  		&WSMessage::set_fault);
-       wsmessage.method("setMustUnderstand", 		&WSMessage::set_must_understand);
-       wsmessage.method("setAttachments",       	&WSMessage::set_attachments);
-       wsmessage.method("setAttachmentContentType",	&WSMessage::set_attachment_content_type);
-       wsmessage.method("setHeaders",				&WSMessage::set_headers);
-       wsmessage.method("setRestContentType",       &WSMessage::set_rest_content_type);
-       wsmessage.method("getHeaders",               &WSMessage::get_headers<Php::Value>);
+       wsmessage.method<&WSMessage::set_payload>  					("setPayload");
+       wsmessage.method<&WSMessage::set_endpoint> 					("setEndpoint");
+       wsmessage.method<&WSMessage::set_action>   					("setAction");
+       wsmessage.method<&WSMessage::set_from>     					("setFrom");
+       wsmessage.method<&WSMessage::set_reply_to> 					("setReply");
+       wsmessage.method<&WSMessage::set_fault>    					("setFault");
+       wsmessage.method<&WSMessage::set_must_understand> 			("setMustUnderstand");
+       wsmessage.method<&WSMessage::set_attachments> 				("setAttachments");
+       wsmessage.method<&WSMessage::set_attachment_content_type>	("setAttachmentContentType");
+       wsmessage.method<&WSMessage::set_headers>   					("setHeaders");
+       wsmessage.method<&WSMessage::set_rest_content_type>          ("setRestContentType");
+       wsmessage.method<&WSMessage::get_headers<Php::Value>>		("getHeaders");
 
-       wsmessage.method("getDebug",       &WSMessage::get_debug);
-       wsmessage.method("getResponse",    &WSMessage::getResponse);
+       wsmessage.method<&WSMessage::get_debug>   ("getDebug");
+       wsmessage.method<&WSMessage::getResponse> ("getResponse");
        //wsmessage.method("getPayload",  &WSMessage::get_payload);
-        //wsmessage.method("getTo",       &WSMessage::get_to);
+       //wsmessage.method("getTo",       &WSMessage::get_to);
 
-        //wsmessage.property("str", &WSMessage::getStr, &WSMessage::setStr);
-        //wsmessage.property("str", "", Php::Public);
+       //wsmessage.property("str", &WSMessage::getStr, &WSMessage::setStr);
+       //wsmessage.property("str", "", Php::Public);
 
-        //wsmessage.property(WSF_ATTACHMENTS, Php::Public);
-
-
-        // WSClientProxy - Registering methods
-        wsclientproxy.method("__construct", &WSClientProxy::__construct);
-
-        // WSData - Registering methods
-        wsdata.method("__construct", &WSData::__construct);
-
-        // WSFault - Registering methods
-        wsfault.method("__construct", &WSFault::__construct);
-
-        // WSHeader - Registering methods
-        wsheader.method("__construct", 		 &WSHeader::__construct);
-        wsheader.method("setNs",       		 &WSHeader::set_ns);
-        wsheader.method("setPrefix",  	 	 &WSHeader::set_prefix);
-        wsheader.method("setName",     		 &WSHeader::set_name);
-        wsheader.method("setData",     		 &WSHeader::set_data);
-        wsheader.method("setRole",    	     &WSHeader::set_role);
-
-        wsheader.method("getNs",             &WSHeader::get_ns);
-        wsheader.method("getPrefix",         &WSHeader::get_prefix);
-        wsheader.method("getName",           &WSHeader::get_name);
-        wsheader.method("getData",           &WSHeader::get_data);
-        wsheader.method("getRole",           &WSHeader::get_role);
-
-        wsheader.method("isMustUnderstand",  &WSHeader::is_must_understand);
-        wsheader.method("setMustUnderstand", &WSHeader::set_must_understand);
-
-        //wsheader.property("ns", "", Php::Public);
-
-        // WSPolicy - Registering methods
-        wspolicy.method("__construct",    &WSPolicy::__construct);
-        wspolicy.method("setXMLPolicy",   &WSPolicy::set_policy);
-
-        // WSUtils - Registering methods
-        wsutils.method("__construct", &WSUtils::__construct);
-
-        // WSSecurityToken - Registering methods
-        wssecuritytoken.method("__construct", 						&WSSecurityToken::__construct);
-        wssecuritytoken.method("setUser", 							&WSSecurityToken::set_user);
-        wssecuritytoken.method("setCertificate", 					&WSSecurityToken::set_certificate);
-        wssecuritytoken.method("setPasswordType", 					&WSSecurityToken::set_password_type);
-        wssecuritytoken.method("setPassword",                       &WSSecurityToken::set_password);
-        wssecuritytoken.method("setPrivateKey",                     &WSSecurityToken::set_private_key);
-        wssecuritytoken.method("setReceiverCertificate",            &WSSecurityToken::set_receiver_certificate);
-        wssecuritytoken.method("setTTL", 							&WSSecurityToken::set_ttl);
-        wssecuritytoken.method("setPasswordCallback", 				&WSSecurityToken::set_password_callback);
-        wssecuritytoken.method("setReplayDetectionCallback",        &WSSecurityToken::set_replay_detection_callback);
-        wssecuritytoken.method("setReplayDetectionCallbackData",    &WSSecurityToken::set_replay_detection_callback_data);
-        wssecuritytoken.method("setSCTStoreCallback", 				&WSSecurityToken::set_sct_store_callback);
-        wssecuritytoken.method("setSCTGetCallback", 				&WSSecurityToken::set_sct_get_callback);
-        wssecuritytoken.method("setSCTDeleteCallback", 				&WSSecurityToken::set_sct_delete_callback);
-        wssecuritytoken.method("setSCTCallbackData",				&WSSecurityToken::set_sct_callback_data);
+       //wsmessage.property(WSF_ATTACHMENTS, Php::Public);
 
 
-        ktwso2.add(std::move(wsclient));
-        ktwso2.add(std::move(wsmessage));
-        ktwso2.add(std::move(wsclientproxy));
-        ktwso2.add(std::move(wsdata));
-        ktwso2.add(std::move(wsfault));
-        ktwso2.add(std::move(wsheader));
-        ktwso2.add(std::move(wspolicy));
-        ktwso2.add(std::move(wsutils));
-        ktwso2.add(std::move(wssecuritytoken));
+       // WSClientProxy - Registering methods
+       wsclientproxy.method<&WSClientProxy::__construct> ("__construct");
 
-        ktwso2.add(Php::Ini("ktwso2.axis2", "default-value"));
+       // WSData - Registering methods
+       wsdata.method<&WSData::__construct> ("__construct");
 
-        // return the extension
-        return ktwso2;
+       // WSFault - Registering methods
+       wsfault.method<&WSFault::__construct> ("__construct");
+
+       // WSHeader - Registering methods
+       wsheader.method<&WSHeader::__construct> ("__construct");
+       wsheader.method<&WSHeader::set_ns>      ("setNs");
+       wsheader.method<&WSHeader::set_prefix>  ("setPrefix");
+       wsheader.method<&WSHeader::set_name>    ("setName");
+       wsheader.method<&WSHeader::set_data>    ("setData");
+       wsheader.method<&WSHeader::set_role>    ("setRole");
+
+       wsheader.method<&WSHeader::get_ns>      ("getNs");
+       wsheader.method<&WSHeader::get_prefix>  ("getPrefix");
+       wsheader.method<&WSHeader::get_name>    ("getName");
+       wsheader.method<&WSHeader::get_data>    ("getData");
+       wsheader.method<&WSHeader::get_role>    ("getRole");
+
+       wsheader.method<&WSHeader::is_must_understand>  ("isMustUnderstand");
+       wsheader.method<&WSHeader::set_must_understand> ("setMustUnderstand");
+
+       //wsheader.property("ns", "", Php::Public);
+
+       // WSPolicy - Registering methods
+       wspolicy.method<&WSPolicy::__construct> ("__construct");
+       wspolicy.method<&WSPolicy::set_policy>  ("setXMLPolicy");
+
+       // WSUtils - Registering methods
+       wsutils.method<&WSUtils::__construct> ("__construct");
+
+       // WSSecurityToken - Registering methods
+       wssecuritytoken.method<&WSSecurityToken::__construct>   						("__construct");
+       wssecuritytoken.method<&WSSecurityToken::set_user>    						("setUser");
+       wssecuritytoken.method<&WSSecurityToken::set_certificate> 					("setCertificate");
+       wssecuritytoken.method<&WSSecurityToken::set_password_type> 					("setPasswordType");
+       wssecuritytoken.method<&WSSecurityToken::set_password>       				("setPassword");
+       wssecuritytoken.method<&WSSecurityToken::set_private_key>    				("setPrivateKey");
+       wssecuritytoken.method<&WSSecurityToken::set_receiver_certificate> 			("setReceiverCertificate");
+       wssecuritytoken.method<&WSSecurityToken::set_ttl> 							("setTTL");
+       wssecuritytoken.method<&WSSecurityToken::set_password_callback> 				("setPasswordCallback");
+       wssecuritytoken.method<&WSSecurityToken::set_replay_detection_callback> 		("setReplayDetectionCallback");
+       wssecuritytoken.method<&WSSecurityToken::set_replay_detection_callback_data> ("setReplayDetectionCallbackData");
+       wssecuritytoken.method<&WSSecurityToken::set_sct_store_callback> 			("setSCTStoreCallback");
+       wssecuritytoken.method<&WSSecurityToken::set_sct_get_callback> 				("setSCTGetCallback");
+       wssecuritytoken.method<&WSSecurityToken::set_sct_delete_callback> 			("setSCTDeleteCallback");
+       wssecuritytoken.method<&WSSecurityToken::set_sct_callback_data>		 		("setSCTCallbackData");
+
+       ns.add(std::move(wsclient));
+       ns.add(std::move(wsmessage));
+       ns.add(std::move(wsclientproxy));
+       ns.add(std::move(wsdata));
+       ns.add(std::move(wsfault));
+       ns.add(std::move(wsheader));
+       ns.add(std::move(wspolicy));
+       ns.add(std::move(wsutils));
+       ns.add(std::move(wssecuritytoken));
+
+       //Move extension to namespace
+       extension.add(std::move(ns));
+
+       //Add default ini configuration
+       extension.add(Php::Ini("ktwso2.axis2_directory", ""));
+       extension.add(Php::Ini("ktwso2.log_path",        ""));
+       extension.add(Php::Ini("ktwso2.log_filename",    ""));
+       extension.add(Php::Ini("ktwso2.log_level",        0));
+
+       // return the extension
+       return extension;
     }
 }

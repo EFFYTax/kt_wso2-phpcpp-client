@@ -7,6 +7,11 @@
 #include <boost/scoped_array.hpp>
 #include <boost/format.hpp>
 #include <boost/any.hpp>
+/**
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+**/
 #include <axis2_svc_client.h>
 #include <axis2_http_transport.h>
 #include <axis2_addr.h>
@@ -26,7 +31,6 @@ class WSClient
 		  public Php::Base {
 
 private:
-
 	//std::map<std::string,std::string> _reference_parameters;
 
 public:

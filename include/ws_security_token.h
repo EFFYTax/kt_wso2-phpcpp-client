@@ -83,7 +83,6 @@ public:
 	Php::Value set_sct_delete_callback(Php::Parameters &params);
 
 	Php::Value set_sct_callback_data(Php::Parameters &params);
-
 };
 
 #endif

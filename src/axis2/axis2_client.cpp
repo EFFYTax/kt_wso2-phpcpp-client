@@ -165,7 +165,7 @@ axiom_xml_reader_t * Axis2Client :: get_reader_from_val(string payload)
 
     if (!reader)
     {
-    	log("XML Reader creation failed The input string payload is either null or malformed");
+    	log("XML Reader creation failed The input string payload is either null or malformed", __FILE__,__LINE__);
 		throw Php::Exception( "XML Reader creation failed The input string payload is either null or malformed" );
 	}
 
@@ -230,7 +230,7 @@ void Axis2Client :: register_proxy()
 		string msg = (boost::format("Setting proxy options %1% -- %2% -- ")
 			% _proxy_host
 			% _proxy_port ).str();
-		log(msg);
+		log(msg, __FILE__,__LINE__);
 	}
 }
 
@@ -248,11 +248,11 @@ void Axis2Client :: register_proxy_auth() {
 			get_axis2_char_ptr(_proxy_password),
 			get_axis2_char_ptr(_proxy_auth_type)) == AXIS2_SUCCESS)
 		{
-			log("Success in setting proxy authentication information");
+			log("Success in setting proxy authentication information", __FILE__,__LINE__);
 		}
 		else
 		{
-			log("Failed in setting proxy authentication information");
+			log("Failed in setting proxy authentication information", __FILE__,__LINE__);
 		}
 	}
 };
@@ -275,7 +275,7 @@ void Axis2Client :: register_ssl()
 			_env, 0, 1, 0, axutil_strdup(_env, get_axis2_char_ptr(_ssl_server_key_filename))
 		);
 
-		log((boost::format("Setting SSL server certficate ::  %1%") % _ssl_server_key_filename.c_str()).str());
+		log((boost::format("Setting SSL server certficate ::  %1%") % _ssl_server_key_filename.c_str()).str(), __FILE__,__LINE__);
 	}
 
 	if(!_ssl_client_key_filename.empty())
@@ -284,7 +284,7 @@ void Axis2Client :: register_ssl()
 			_env, 0, 1, 0, axutil_strdup (_env, get_axis2_char_ptr(_ssl_client_key_filename))
 		);
 
-		log((boost::format("Setting SSL client certficate ::  %1%") % _ssl_client_key_filename.c_str()).str());
+		log((boost::format("Setting SSL client certficate ::  %1%") % _ssl_client_key_filename.c_str()).str(), __FILE__,__LINE__);
 	}
 
 	if(!_ssl_passphrase.empty())
@@ -293,7 +293,7 @@ void Axis2Client :: register_ssl()
 			_env, 0, 1, 0, axutil_strdup (_env, get_axis2_char_ptr(_ssl_passphrase))
 		);
 
-		log("passphrase found");
+		log("passphrase found", __FILE__,__LINE__);
 	}
 
 	axis2_options_set_property (_client_options, _env, "SERVER_CERT", 	 ssl_server_key_prop);
@@ -318,11 +318,11 @@ void Axis2Client :: register_http_auth() {
 			get_axis2_char_ptr(_http_password),
 			get_axis2_char_ptr(_http_auth_type)) == AXIS2_SUCCESS)
 		{
-			log("Success in setting HTTP authentication information");
+			log("Success in setting HTTP authentication information", __FILE__,__LINE__);
 		}
 		else
 		{
-			log("Failed in Setting HTTP authentication information");
+			log("Failed in Setting HTTP authentication information", __FILE__,__LINE__);
 		}
 	}
 };
@@ -340,7 +340,7 @@ void Axis2Client :: register_soap_version()
 		// set soap version
 		axis2_options_set_soap_version(_client_options, _env, [this]()->int { return _soap_version == 1.1 ? 1 : 2; }());
 
-		log((boost::format("useSOAP TRUE setting soap version %1%") % _soap_version).str());
+		log((boost::format("useSOAP TRUE setting soap version %1%") % _soap_version).str(), __FILE__,__LINE__);
 	}
 	//enable rest
 	else
@@ -369,7 +369,7 @@ void Axis2Client :: register_http_transport()
 
 		axis2_options_set_property (_client_options, _env, AXIS2_HTTP_METHOD, http_method_property);
 
-		log((boost::format("Setting HTTPMethod %1% property") % _http_method.c_str()).str());
+		log((boost::format("Setting HTTPMethod %1% property") % _http_method.c_str()).str(), __FILE__,__LINE__);
 	}
 };
 
@@ -412,7 +412,7 @@ void Axis2Client :: register_endpoint_and_soap_action()
 
 		axis2_options_set_property(_client_options, _env, AXIS2_TRANSPORT_URL, transport_url);
 
-		log((boost::format("Setting WS Transport URL :: %1%") % _transport_url.c_str()).str());
+		log((boost::format("Setting WS Transport URL :: %1%") % _transport_url.c_str()).str(), __FILE__,__LINE__);
 	}
 
 	//if client_options
@@ -423,7 +423,7 @@ void Axis2Client :: register_endpoint_and_soap_action()
 		axutil_string_t *action_string = axutil_string_create (_env, get_axis2_char_ptr(action));
 		axis2_options_set_soap_action (_client_options, _env, action_string);
 
-		log((boost::format("Setting WS SOAP Action :: %1%") % action.c_str()).str());
+		log((boost::format("Setting WS SOAP Action :: %1%") % action.c_str()).str(), __FILE__,__LINE__);
 	}
 };
 
@@ -432,11 +432,11 @@ void Axis2Client :: register_endpoint_and_soap_action()
  */
 void Axis2Client :: register_wsa_options() {
 
-	log("Setting addressing options");
+	log("Setting addressing options", __FILE__,__LINE__);
 
-	if      (_use_wsa == "1.0")			{ log("useWSA true, version 1.0"); }
-	else if (_use_wsa == "submission") 	{ log("useWSA true, version is submission"); }
-	else 							  	{ log("useWSA false, disabled"); _is_addressing_engaged = false; }
+	if      (_use_wsa == "1.0")			{ log("useWSA true, version 1.0", __FILE__,__LINE__); }
+	else if (_use_wsa == "submission") 	{ log("useWSA true, version is submission", __FILE__,__LINE__); }
+	else 							  	{ log("useWSA false, disabled", __FILE__,__LINE__); _is_addressing_engaged = false; }
 
 	if(!_use_wsa.empty())
 	{
@@ -446,7 +446,7 @@ void Axis2Client :: register_wsa_options() {
 			_is_addr_action_present = true;
 
 			log((boost::format("Addressing action is :- %1%")
-				% _wsmessage->_action->get<const char *>()).str());
+				% _wsmessage->_action->get<const char *>()).str(), __FILE__,__LINE__);
 		}
 
 		//Lambda handling addressing by type
@@ -463,13 +463,13 @@ void Axis2Client :: register_wsa_options() {
 			{
 				epr = axis2_endpoint_ref_create (_env, param->get<const char *>());
 
-				log((boost::format("Addressing %1% is :- %2%") %type.c_str() %param->get<const char *>()).str());
+				log((boost::format("Addressing %1% is :- %2%") %type.c_str() %param->get<const char *>()).str(), __FILE__,__LINE__);
 			}
 			else if (param->is_array())
 			{
 				epr = add_endpoint_values_ref(param->get<map<string, vector<string>>>());
 
-				log((boost::format("Addressing params array for param :: %1%") %type.c_str()).str());
+				log((boost::format("Addressing params array for param :: %1%") %type.c_str()).str(), __FILE__,__LINE__);
 			}
 
 			if(type == WSF_REPLY_TO) 		{ axis2_options_set_reply_to (_client_options, _env, epr); }
@@ -505,7 +505,7 @@ void Axis2Client :: register_wsa_options() {
 	{
 		axis2_svc_client_engage_module (_svc_client, _env, WSF_MODULE_ADDRESSING);
 
-		log("DEBUG ------> Engaged Addressing module");
+		log("DEBUG ------> Engaged Addressing module", __FILE__,__LINE__);
 
 		if(_use_wsa == "submission")
 		{
@@ -514,7 +514,7 @@ void Axis2Client :: register_wsa_options() {
 
 			axis2_options_set_property (_client_options, _env, AXIS2_WSA_VERSION, prop);
 
-			log("Addressing version is submission");
+			log("Addressing version is submission", __FILE__,__LINE__);
 		}
 
 		_is_addressing_engaged = true;
@@ -541,7 +541,7 @@ bool Axis2Client :: register_header()
 
 	if(_wsmessage->hasHeaders())
 	{
-		log("sending headers found");
+		log("sending headers found", __FILE__,__LINE__);
 
 		axiom_node_t *header_node = nullptr;
 
@@ -604,7 +604,7 @@ axiom_node_t * Axis2Client :: create_header_node(WSHeader *wsheader, axiom_node_
 
 	if(wsheader->_must_understand)
 	{
-		log("must understand value is set");
+		log("must understand value is set", __FILE__,__LINE__);
 
 		string must_understand = to_string(wsheader->_must_understand);
 
@@ -702,7 +702,7 @@ bool Axis2Client :: register_security()
 	{
 		if(_wspolicy->hasXMLPolicy())
 		{
-			log("POLICY :: XML found");
+			log("POLICY :: XML found", __FILE__,__LINE__);
 			policy_node = get_node_by_xmlstr(_wspolicy->_policy);
 		}
 		else
@@ -812,7 +812,7 @@ axis2_endpoint_ref_t * Axis2Client :: add_endpoint_values_ref(map<string, vector
 				log((boost::format("Setting WS-Adressing %1% :: %2%")
 					% type.c_str()
 					% xml_str.c_str()
-				).str());
+				).str(), __FILE__,__LINE__);
 			}
 		}
 	};
@@ -841,7 +841,7 @@ bool Axis2Client :: add_rampart_options()
 	//Do we have a rampart context
 	if(!_rampart_ctx)
 	{
-		log("RAMPART :: rampart context null -- abort security");
+		log("RAMPART :: rampart context null -- abort security", __FILE__,__LINE__);
 		return false;
 	}
 
@@ -851,20 +851,20 @@ bool Axis2Client :: add_rampart_options()
 		return false;
 	}
 
-	log("RAMPART :: Setting values to rampart context ");
+	log("RAMPART :: Setting values to rampart context ", __FILE__,__LINE__);
 
 	rampart_context_set_ttl(_rampart_ctx, _env, _wssectoken->_ttl);
 
 	//clockSkewBuffer @undocumented from api
 	//rampart_context_set_clock_skew_buffer(rampart_context, env, Z_LVAL_PP(token_val));
 
-	log(_wssectoken->_user);
+	log(_wssectoken->_user, __FILE__,__LINE__);
 
 	if(_wssectoken->hasUser())
 	{
 		rampart_context_set_user(_rampart_ctx, _env, get_axis2_char_ptr(_wssectoken->_user));
 
-		log("RAMPART :: Setting username");
+		log("RAMPART :: Setting username", __FILE__,__LINE__);
 	}
 
 	if(_wssectoken->hasCertificate())
@@ -873,7 +873,7 @@ bool Axis2Client :: add_rampart_options()
 
 		if(rampart_context_set_certificate_type(_rampart_ctx, _env, AXIS2_KEY_TYPE_PEM) == AXIS2_SUCCESS)
 		{
-			log("RAMPART :: Setting certificate type");
+			log("RAMPART :: Setting certificate type", __FILE__,__LINE__);
 		}
 	}
 
@@ -883,7 +883,7 @@ bool Axis2Client :: add_rampart_options()
 
 		if(rampart_context_set_receiver_certificate_type(_rampart_ctx, _env, AXIS2_KEY_TYPE_PEM) == AXIS2_SUCCESS)
 		{
-			log("RAMPART :: Setting receiver certificate type");
+			log("RAMPART :: Setting receiver certificate type", __FILE__,__LINE__);
 		}
 	}
 
@@ -891,18 +891,22 @@ bool Axis2Client :: add_rampart_options()
 	{
 		rampart_context_set_prv_key(_rampart_ctx, _env, get_axis2_char_ptr(_wssectoken->_private_key));
 
-		log("RAMPART :: Setting pvt key");
+		log("RAMPART :: Setting pvt key", __FILE__,__LINE__);
 
 		if(rampart_context_set_prv_key_type (_rampart_ctx, _env, AXIS2_KEY_TYPE_PEM) == AXIS2_SUCCESS)
 		{
-			log("RAMPART :: Setting pvt key format");
+			log("RAMPART :: Setting pvt key format", __FILE__,__LINE__);
 		}
 	}
 
 	if(_wssectoken->hasPassword())
 	{
-		rampart_context_set_password_type(_rampart_ctx, _env, get_axis2_char_ptr(_wssectoken->_password));
+		rampart_context_set_password(_rampart_ctx, _env, get_axis2_char_ptr(_wssectoken->_password));
+
+		log("RAMPART :: Setting password " + _wssectoken->_password, __FILE__,__LINE__);
 	}
+
+
 
 	//TODO: Implement Password Callback      @wsf_policy.c:622
 	//TODO: Implement PCKS12 KeyStore        @wsf_policy.c:638
@@ -910,7 +914,7 @@ bool Axis2Client :: add_rampart_options()
 	//TODO: Implement Enable RDetect Callb   @wsf_policy.c:658
 	//TODO: Implement Custom Token           @wsf_policy.c:664
 
-	log("RAMPART :: Rampart Ready");
+	log("RAMPART :: Rampart Ready", __FILE__,__LINE__);
 
 	return true;
 }
@@ -928,7 +932,7 @@ axiom_node_t * Axis2Client :: create_policy()
 
 	if(!_wspolicy) return nullptr;
 
-	log("NEETHI :: Creating the policy node");
+	log("NEETHI :: Creating the policy node", __FILE__,__LINE__);
 
 	neethi_options = neethi_options_create (_env);
 
@@ -938,39 +942,39 @@ axiom_node_t * Axis2Client :: create_policy()
 		if(_wspolicy->hasTimestamp())
 		{
 			if (neethi_options_set_include_timestamp (neethi_options, _env, AXIS2_TRUE))
-				log("NEETHI :: Timestamp_enabled");
+				log("NEETHI :: Timestamp_enabled", __FILE__,__LINE__);
 		}
 
 		//Has Username Token
 		if(_wspolicy->hasUsernameToken())
 		{
 			if (neethi_options_set_is_username_token (neethi_options, _env, AXIS2_TRUE))
-				log("NEETHI :: Token reference_enabled");
+				log("NEETHI :: Token reference_enabled", __FILE__,__LINE__);
 		}
 
 		//Has Policy encrypted
 		if(_wspolicy->hasEncrypted())
 		{
 			if (neethi_options_set_encrypt_body (neethi_options, _env, AXIS2_TRUE))
-				log("NEETHI :: Encrypt body option enabled");
+				log("NEETHI :: Encrypt body option enabled", __FILE__,__LINE__);
 		}
 
 		if(_wspolicy->hasAlgoSuite())
 		{
 			if (neethi_options_set_algorithmsuite (neethi_options, _env, get_axis2_char_ptr(_wspolicy->_algorithm_suite)))
-				log("NEETHI :: AlgorithmSuite enabled");
+				log("NEETHI :: AlgorithmSuite enabled", __FILE__,__LINE__);
 		}
 
 		if(_wspolicy->hasSigned())
 		{
 			if (neethi_options_set_sign_body (neethi_options, _env, AXIS2_TRUE))
-				log("NEETHI :: Sign_enabled");
+				log("NEETHI :: Sign_enabled", __FILE__,__LINE__);
 		}
 
 		if(_wspolicy->hasSecurityTokenRef())
 		{
 			if (neethi_options_set_keyidentifier (neethi_options, _env, get_axis2_char_ptr(_wspolicy->getRampartTokenValue())))
-				log("NEETHI :: Token_ref_enabled");
+				log("NEETHI :: Token_ref_enabled", __FILE__,__LINE__);
 
 			/**
 			 * TODO: To be Implemented
@@ -986,17 +990,17 @@ axiom_node_t * Axis2Client :: create_policy()
 			if(_wspolicy->_protection_order == "EncryptBeforeSigning")
 			{
 				if (neethi_options_set_encrypt_before_sign (neethi_options, _env, AXIS2_TRUE))
-					log("NEETHI :: Encrypt_before_sign_enabled");
+					log("NEETHI :: Encrypt_before_sign_enabled", __FILE__,__LINE__);
 
 			}
 			else if(_wspolicy->_protection_order == "SignBeforeEncrypt")
 			{
 				if (neethi_options_set_encrypt_before_sign (neethi_options, _env, AXIS2_FALSE))
-					log("Sign_before_encrption_enabled");
+					log("Sign_before_encrption_enabled", __FILE__,__LINE__);
 			}
 			else
 			{
-				log("NEETHI :: Wrong Protection Order");
+				log("NEETHI :: Wrong Protection Order", __FILE__,__LINE__);
 			}
 		}
 
@@ -1038,7 +1042,7 @@ void Axis2Client :: register_reliable_messaging()
 
 		axis2_options_set_property (_client_options, _env, WSF_SANDESHA2_CLIENT_RM_SPEC_VERSION, rm_prop);
 
-		log("RM version > 0");
+		log("RM version > 0", __FILE__,__LINE__);
 
 		//RM must be engaged
 		_engage_rm = true;
@@ -1050,11 +1054,11 @@ void Axis2Client :: register_reliable_messaging()
 		if(!_is_addressing_engaged)
 		{
 			//set addressing
-			log("DEBUG-------> is_addressing_engaged false - TO BE Implemented");
+			log("DEBUG-------> is_addressing_engaged false - TO BE Implemented", __FILE__,__LINE__);
 		}
 		axis2_svc_client_engage_module (_svc_client, _env, WSF_MODULE_ADDRESSING);
 
-		log("useWSA not specified, addressing engaged since rm is engaged");
+		log("useWSA not specified, addressing engaged since rm is engaged", __FILE__,__LINE__);
 
 		axis2_svc_client_engage_module (_svc_client, _env, WSF_MODULE_RM);
 
@@ -1062,19 +1066,36 @@ void Axis2Client :: register_reliable_messaging()
 
 		//set_module_option("sandesha2", "InactivityTimeout", to_string(_sequence_expiry_time));
 
-		log("sequenceExpiryTime setted");
+		//log("sequenceExpiryTime setted");
 
 		//axutil_property_t *seq_property = NULL;
 		//sequence_key = axutil_strdup (_env, get_axis2_char_ptr(_sequence_key));
+
+		//Two way single channel
+		char *offered_seq_id = NULL;
+
+		axutil_property_t *sequence_property = NULL;
+		offered_seq_id 						 = axutil_uuid_gen (_env);
+		sequence_property 					 = axutil_property_create (_env);
+
+		axutil_property_set_value (sequence_property, _env, axutil_strdup (_env, offered_seq_id));
+		axis2_options_set_property (_client_options, _env, "Sandesha2OfferedSequenceId" , sequence_property);
+
+		log ("Sandesha2OfferedSequenceId is set as property", __FILE__,__LINE__);
+
+		//Test if we defined a TIMEOUT for RM
+		/** default timeout value is 5 */
+		char * timeout 						= WSF_RM_DEFAULT_RESPONSE_TIMEOUT;
+		axutil_property_t *timeout_property = axutil_property_create_with_args (_env, 0, 0, 0, timeout);
+
+		if (timeout_property)
+		{
+			axis2_options_set_property (_client_options, _env, "time_out", timeout_property);
+		}
 	}
-
-
-
 	//
 
 	//RM is now engaged
-
-
 
 	//IF Seq expiry time / InactivityTimeout
 	//set_module_option("sandesha2", "InactivityTimeout", "60");

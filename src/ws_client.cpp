@@ -110,13 +110,13 @@ void WSClient :: request() {
 	int status_code = 0;
 
 	log((boost::format("ktws::payload is ready :: %1%")
-		% _wsmessage->getPayload()->get<string>()).str());
+		% _wsmessage->getPayload()->get<string>()).str(), __FILE__,__LINE__);
 
 	_request_payload = get_node_by_xmlstr(_wsmessage->getPayload()->get<string>());
 
 	if (!_request_payload)
 	{
-		log("request payload node is null");
+		log("request payload node is null", __FILE__,__LINE__);
 
 		if(!_use_soap)
 			throw Php::Exception( "request payload node is null" );
@@ -145,19 +145,23 @@ void WSClient :: request() {
 
 	status_code = axis2_svc_client_get_http_status_code(_svc_client, _env);
 
+	string error_msg   = axutil_error_get_message(_env->error);
+	axis2_status_t       error_code  = axutil_error_get_status_code(_env->error);
+
+	log("http status code :: " + std::to_string(status_code), __FILE__,__LINE__);
+
 	//REST
 	if((status_code != 200) && (status_code != 202) && !_use_soap)
 	{
 		throw Php::Exception("Fault");
 	}
 
-	log("http status code :: " + std::to_string(status_code));
 
 	if(has_soap_fault())
 	{
 		string fault = get_soap_fault_msg() ;
 
-		throw Php::Exception("Fault :: " + fault );
+		throw Php::Exception(fault);
 
 	}
 	else if(_response_payload)
@@ -538,7 +542,7 @@ Php::Value WSClient :: set_policy_name(Php::Parameters &params) {
 	};
 	Php::Value self(this);
 
-	if((!p().isObject() && !p().instanceOf("WSPolicy")) || !p().isArray()) {
+	if((!p().isObject() && !p().instanceOf("KTWS\\WSPolicy")) || !p().isArray()) {
 		throw Php::Exception("Unexpected parameter for POLICY NAME - Expected Instance of WSPolicy or array" );
 	}
 	self[WSF_POLICY_NAME] = p();
@@ -900,7 +904,7 @@ Php::Value WSClient :: set_wsmessage(Php::Parameters &params)
 {
 	Php::Value p = params[0];
 
-	if(p.isObject() && p.instanceOf("WSMessage"))
+	if(p.isObject() && p.instanceOf("KTWS\\WSMessage"))
     {
 		Php::Value self(this);
 
@@ -923,7 +927,7 @@ Php::Value WSClient :: set_wssectoken(Php::Parameters &params)
 {
 	Php::Value p = params[0];
 
-	if(p.isObject() && p.instanceOf("WSSecurityToken"))
+	if(p.isObject() && p.instanceOf("KTWS\\WSSecurityToken"))
 	{
 		Php::Value self(this);
 
@@ -946,7 +950,7 @@ Php::Value WSClient :: set_wspolicy(Php::Parameters &params)
 {
 	Php::Value p = params[0];
 
-	if(p.isObject() && p.instanceOf("WSPolicy"))
+	if(p.isObject() && p.instanceOf("KTWS\\WSPolicy"))
 	{
 		Php::Value self(this);
 
@@ -964,12 +968,7 @@ Php::Value WSClient :: set_wspolicy(Php::Parameters &params)
 
 Php::Value WSClient :: get_wsmessage()
 {
-	Php::out << _wsmessage->_rest_content_type << endl;
-
 	return Php::Object("WSMessage", _wsmessage);
-
-
-	//return o;
 }
 
 Php::Value WSClient :: get_wssectoken()

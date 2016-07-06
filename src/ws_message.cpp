@@ -279,7 +279,7 @@ Php::Value WSMessage :: set_headers(Php::Parameters &params) {
 	{
 		for (auto &it: p)
 		{
-			if(it.second.instanceOf("WSHeader"))
+			if(it.second.instanceOf("KTWS\\WSHeader"))
 			{
 				WSHeader *object = (WSHeader *)it.second.implementation();
 

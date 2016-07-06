@@ -24,9 +24,20 @@ protected:
 
 	axutil_env_t *_ws_env_svr 		  = NULL;
 
+	//axis2 home directory
 	std::string _axis2_directory ;
 
-	void set_env();
+	//axis2c log level
+	int _axis2_log_level;
+
+	//axis2c log path
+	std::string _axis2_log_path;
+
+	//axis2c log file
+	std::string _axis2_log_file;
+
+	//
+	void create_env();
 
 	int ws_is_svr = 0;
 
@@ -69,7 +80,7 @@ public:
 	/**
 	 *
 	 */
-	void log(const std::string v);
+	void log(const std::string v, const std::string file, int line);
 
 	/**
 	 *

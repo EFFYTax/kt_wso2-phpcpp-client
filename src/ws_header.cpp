@@ -112,7 +112,7 @@ Php::Value WSHeader :: set_data(Php::Parameters &params) {
 		std::vector<WSHeader *> v;
 		for(auto &it: p)
 		{
-			if(!it.second.isObject() && !it.second.instanceOf("WSHeader"))
+			if(!it.second.isObject() && !it.second.instanceOf("KTWS\\WSHeader"))
 			{
 				throw Php::Exception("Unpected parameters in array of <WSHeader>");
 			}

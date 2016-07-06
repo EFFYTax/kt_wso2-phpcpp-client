@@ -18,7 +18,7 @@
 #	are automatically generated
 #
 
-NAME				=	ktwso2s
+NAME				=	ktwso2
 
 
 #
@@ -29,7 +29,7 @@ NAME				=	ktwso2s
 #	one for each extension. Use this variable to specify this directory.
 #
 
-INI_DIR				=	/etc/php5/conf.d
+INI_DIR				=	/opt/php-5.6/etc	
 
 
 #
@@ -41,7 +41,7 @@ INI_DIR				=	/etc/php5/conf.d
 #	this with a different fixed directory
 #
 
-EXTENSION_DIR		=	/Users/agruet/php/lib/php/extensions/debug-zts-20121212
+EXTENSION_DIR		=   /opt/php-5.6/lib/php/extensions/debug-non-zts-20131226	
 
 
 #
@@ -85,9 +85,9 @@ LINKER				=	g++
 #	with a list of all flags that should be passed to the linker.
 #
 
-COMPILER_FLAGS		=	-Wall -c -g3 -Wno-deprecated-register -Wreserved-user-defined-literal -I./include -I./include/neethi -I./include/axis2 -I../axis2c-unofficial/util/src -I/usr/include/php/Zend -I/usr/include/php/TSRM -I/usr/include/php -I/usr/include/php/main -I../sandesha2c/include -I../axis2c-unofficial/include -I../axis2c-unofficial/util/include -I../axis2c-unofficial/axiom/include -I../axis2c-unofficial/neethi/include -I../rampart-c/include -I/usr/local/Cellar/boost/1.60.0_1/include -I./neethi -std=c++11 -fpic -o
+COMPILER_FLAGS		=	-Wall -c -g3 -fvisibility=hidden -Wno-write-strings -I./include -I./include/neethi -I./include/axis2 -I../kt_axis2c-unofficial/util/src -I/opt/php-5.6/include/php/Zend -I/opt/php-5.6/include/php/TSRM -I/opt/php-5.6/include/php -I/opt/php-5.6/include/php/main -I../kt_sandesha2/include -I../kt_axis2c-unofficial/include -I../kt_axis2c-unofficial/util/include -I../kt_axis2c-unofficial/axiom/include -I../kt_axis2c-unofficial/neethi/include -I../kt_rampart/include -I/usr/include/boost -I./neethi -std=c++11 -fpic -o
 LINKER_FLAGS		=	-shared 
-LINKER_DEPENDENCIES	=	-lphpcpp -L/usr/local/axis2c/lib -laxutil -laxis2_engine -laxis2_axiom -laxis2_http_receiver -laxis2_http_sender -laxis2_parser -laxis2_tcp_receiver -laxis2_tcp_sender -laxis2_xpath -lguththila -lneethi -lsandesha2 -lsandesha2_client -lrampart  -L /usr/local/Cellar/libxml2/2.9.3/lib -lxml2 
+LINKER_DEPENDENCIES	=	-lphpcpp -L/usr/local/axis2c/lib -laxutil -laxis2_engine -laxis2_axiom -laxis2_http_receiver -laxis2_http_sender -laxis2_parser -laxis2_tcp_receiver -laxis2_tcp_sender -laxis2_xpath -lguththila -lneethi -lsandesha2 -lsandesha2_client -lrampart -L /usr/lib/x86_64-linux-gnu -lxml2 
 
 
 #

@@ -23,6 +23,7 @@
 #include <string.h>
 #include <iostream>
 
+using namespace std;
 
 axiom_namespace_t *sp_ns;
 axiom_namespace_t *wsp_ns;
@@ -105,17 +106,17 @@ neethi_options_create(const axutil_env_t *env)
     options->sign_body = AXIS2_FALSE;
     options->encrypt_body = AXIS2_FALSE;
     options->algorithmsuite =  ([] ()->axis2_char_t * {
-    	std::string str = std::string(RP_ALGO_SUITE_BASIC256_RSA15);
+    	string str = std::string(RP_ALGO_SUITE_BASIC256_RSA15);
     	axis2_char_t * ptr = new char[str.length()+1];
-    	std::strncpy(ptr, str.c_str(), str.length());
+    	strncpy(ptr, str.c_str(), str.length());
     	return ptr;
     })();
     options->keyidentifier = NULL;
     options->server_side = AXIS2_FALSE;
     options->binding = ([] ()->axis2_char_t * {
-    	std::string str = std::string(RP_ASYMMETRIC_BINDING);
+    	string str = std::string(RP_ASYMMETRIC_BINDING);
     	axis2_char_t * ptr = new char[str.length()+1];
-    	std::strncpy(ptr, str.c_str(), str.length());
+    	strncpy(ptr, str.c_str(), str.length());
     	return ptr;
     })();
 
