@@ -6,9 +6,11 @@ Important, please keep in mind i'm not a C/C++ dev and there is certainly a lot 
 
 The original WSO2 WSF for PHP extension was a abstract layer for Axis2/c with some additional ( actually optional ) modules such as Rampart/c (WS-SEC), Sandesha2/c (WS-RM ) etc. 
 
-In addtion to this abstract layer, WSO2 developped some PHP scripts handling serialize/unserialize helpers when users want to work in WSDL mode. ( and certainly others stuff ). I did not manage any backport of the old fashion scripts. If you planed to work w/ Object, I suggest to use JMS Serializer and pass the serialized JMS Object  to the `WSMessage::setPayload` method. 
+In addtion to this abstract layer, WSO2 developped some PHP scripts handling serialize/unserialize helpers when users want to work in WSDL mode. ( and certainly others stuff ). I did not manage any backport of the old fashion scripts. If you planed to work w/ Object, I suggest to use JMS Serializer and pass the serialized JMS Object  to the `WSMessage::setPayload` method. However, i will investigate how to implement JMS serializer in a while
 
-The API is refactored but is almost similar to the native WSO2 extension. I will try to document it ASAP. SoapFault are not thrown as SoapFault or WSFault object. 
+The API is refactored but is "almost" similar to the native WSO2 extension. I will try to document it ASAP. 
+
+SoapFault are not thrown as KTWS\WSFault object ( formerly know as \WSFault ), still waiting support for custom exceptions from PHPCPP team. This could be normally compiled for PHP7 through the master branch of PHPCPP. 
 
 ## Installation
 
