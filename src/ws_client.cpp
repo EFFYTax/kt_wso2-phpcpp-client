@@ -3,14 +3,21 @@
 /**
  * WSClient c++ ctor
  */
-WSClient::WSClient() : Axis2Client
-(){};
+WSClient::WSClient() {
+
+    Axis2Config config;
+    config.home_folder = Php::ini_get("ktwso2.axis2_directory").stringValue();
+    config.log_level   = Php::ini_get("ktwso2.log_level").numericValue();
+    config.log_file    = Php::ini_get("ktwso2.log_filename").stringValue();
+    config.log_path    = Php::ini_get("ktwso2.log_path").stringValue();
+
+    axis2Client = std::make_shared<Axis2Client>(config);
+};
 
 /**
  * WSClient c++ dtor
  */
-WSClient :: ~WSClient
-(){};
+WSClient :: ~WSClient(){};
 
 /**
  * WSClient PHP __ctor
@@ -20,7 +27,7 @@ WSClient :: ~WSClient
 void WSClient :: __construct() {
 
 	//Check for axis2c service client ready
-	if(!_svc_client) {
+	if(!axis2Client->_svc_client) {
 		throw Php::Exception("Failed to create axis2c service client - Check your configuration and log file");
 	}
 };
@@ -33,7 +40,7 @@ void WSClient :: __construct() {
  */
 bool WSClient :: hasMessage()
 {
-	return (_wsmessage) ? true : false;
+	return (axis2Client->_wsmessage) ? true : false;
 };
 
 /**
@@ -44,7 +51,7 @@ bool WSClient :: hasMessage()
  */
 bool WSClient :: hasProxy()
 {
-	return ( !_proxy_host.empty() && !_proxy_port.empty() ) ? true : false;
+	return ( !axis2Client->proxyConf.proxy_host.empty() && !axis2Client->proxyConf.proxy_port.empty() ) ? true : false;
 };
 
 /**
@@ -56,7 +63,7 @@ bool WSClient :: hasProxy()
  */
 bool WSClient :: hasProxyAuth()
 {
-	return (hasProxy() && !_proxy_username.empty() && !_proxy_password.empty()) ? true : false;
+	return (hasProxy() && !axis2Client->proxyConf.proxy_username.empty() && !axis2Client->proxyConf.proxy_password.empty()) ? true : false;
 }
 
 /**
@@ -68,7 +75,7 @@ bool WSClient :: hasProxyAuth()
  */
 bool WSClient :: hasSSL()
 {
-	return (!_ssl_client_key_filename.empty() || !_ssl_server_key_filename.empty()) ? true : false;
+	return (!axis2Client->sslConf.ssl_client_key_filename.empty() || !axis2Client->sslConf.ssl_server_key_filename.empty()) ? true : false;
 }
 
 /**
@@ -79,7 +86,7 @@ bool WSClient :: hasSSL()
  */
 bool WSClient :: hasHTTPAuth()
 {
-	return (!_http_username.empty() && !_http_password.empty()) ? true : false;
+	return (!axis2Client->httpAuth.http_username.empty() && !axis2Client->httpAuth.http_password.empty()) ? true : false;
 }
 
 /**
@@ -90,7 +97,7 @@ bool WSClient :: hasHTTPAuth()
  */
 bool WSClient :: hasSecurity()
 {
-	return (_wssectoken) ? true : false;
+	return (axis2Client->_wssectoken) ? true : false;
 }
 
 /*
@@ -103,83 +110,83 @@ bool WSClient :: hasSecurity()
  */
 void WSClient :: request() {
 
-	if(!_wsmessage) {
+    if(!axis2Client->_wsmessage) {
 		throw Php::Exception("Need a WSMessage Instance");
 	}
 
-	int status_code = 0;
+    axis2Client->log((boost::format("ktws::payload is ready :: %1%")
+		% axis2Client->_wsmessage->getPayload()->get<string>()).str(), __FILE__,__LINE__);
 
-	log((boost::format("ktws::payload is ready :: %1%")
-		% _wsmessage->getPayload()->get<string>()).str(), __FILE__,__LINE__);
+	axis2Client->_request_payload = axis2Client->getAxiomRootElementByXMLString(axis2Client->_wsmessage->getPayload()->get<string>());
 
-	_request_payload = get_node_by_xmlstr(_wsmessage->getPayload()->get<string>());
-
-	if (!_request_payload)
+	if (!axis2Client->_request_payload)
 	{
-		log("request payload node is null", __FILE__,__LINE__);
+	    axis2Client->log("request payload node is null", __FILE__,__LINE__);
 
-		if(!_use_soap)
+		if(!axis2Client->tansportOpts.use_soap)
 			throw Php::Exception( "request payload node is null" );
 	}
 
-	if(hasProxy()) 		register_proxy();
-	if(hasProxyAuth())  register_proxy_auth();
-	if(hasSSL())   		register_ssl();
-	if(hasHTTPAuth())	register_http_auth();
-	if(hasSecurity())   register_security();
+	if(hasProxy()) 		axis2Client->setProxy();
+	if(hasProxyAuth())  axis2Client->setProxyAuth();
+	if(hasSSL())   	    axis2Client->setSSLAuthentication();
+	if(hasHTTPAuth())	axis2Client->setHttpAuth();
+	if(hasSecurity())   axis2Client->setWSSecurityOpts();
 
-	register_soap_version();
-	register_http_transport();
-	register_endpoint_and_soap_action();
-	register_wsa_options();
-	register_header();
-	register_timeout();
-	register_reliable_messaging();
+	axis2Client->setSoapVersion();
+	axis2Client->setHttpTransport();
+	axis2Client->setEndpointAndSoapAction();
+	axis2Client->setWSAOpts();
+	axis2Client->setSoapHeaders();
+	axis2Client->setTimeout();
+	axis2Client->setWSReliableOpts();
 
-	_response_payload = axis2_svc_client_send_receive (_svc_client, _env, _request_payload);
+	axis2Client->response.payload.reset(axis2_svc_client_send_receive (
+	        axis2Client->_svc_client.get(), axis2Client->env.get(), axis2Client->_request_payload.get())
+	);
+/*
+ * TODO: Implement
+ */
+//	if(_is_engaged_rm){}
 
-	if(_is_engaged_rm)
-	{
-		//TODO: implmement sequence and rm_spec_version
-	}
+	axis2Client->response.status_code 	= axis2_svc_client_get_http_status_code(axis2Client->_svc_client.get(), axis2Client->env.get());
+	std::string     str_status_code     = std::to_string(axis2Client->response.status_code);
+	string          error_msg           = axutil_error_get_message(axis2Client->env.get()->error);
+	axis2_status_t  error_code          = axutil_error_get_status_code(axis2Client->env.get()->error);
 
-	status_code 		        = axis2_svc_client_get_http_status_code(_svc_client, _env);
-	string          error_msg   = axutil_error_get_message(_env->error);
-	axis2_status_t  error_code  = axutil_error_get_status_code(_env->error);
-
-	log("http status code :: " + std::to_string(status_code), __FILE__,__LINE__);
+	axis2Client->log("http status code :: " + str_status_code, __FILE__,__LINE__);
 
 	//REST
-	if(!_use_soap)
+	if(!axis2Client->tansportOpts.use_soap)
 	{
-		if(status_code != 200 && status_code != 202)
+		if(axis2Client->response.status_code != 200 && axis2Client->response.status_code != 202)
 		{
 			throw Php::Exception("REST Fault");
 		}
 	}
 
 	//The SOAP Request is faulty
-	else if(has_soap_fault())
+	else if(axis2Client->hasSoapFault())
 	{
-		Axis2Client::FaultType fault = get_soap_fault_msg();
+		Axis2Client::FaultType fault = axis2Client->getSoapFault();
 
 		//Strong limitation of PHP-CPP which is not yet able to throw custom Exception.
-		//As a workaround just use the
-		throw Php::Exception( fault.node, status_code );
+		//As a workaround just use standard \Exception with the response payload
+		throw Php::Exception( fault.node, axis2Client->response.status_code );
 	}
 
-	//Soap response
-	else if(_response_payload)
+	//Empty response
+	else if(!axis2Client->response.payload)
 	{
-		_wsmessage->_response = get_response_msg();
+	    axis2Client->log("Issue", __FILE__,__LINE__);
 
-		return ;
+	    throw Php::Exception("Issue while requesting, no response received");
 	}
 
-	//
+	//Response
 	else
 	{
-		log("Issue", __FILE__,__LINE__);
+	    axis2Client->_wsmessage->_response = axis2Client->getSoapResponse();
 	}
 };
 
@@ -193,7 +200,7 @@ Php::Value WSClient :: disable_soap()
 {
 	Php::Value self(this);
 
-	_use_soap = false;
+	axis2Client->tansportOpts.use_soap = false;
 
 	self["use_soap"] = false;
 
@@ -213,7 +220,7 @@ Php::Value WSClient :: set_soap_version(Php::Parameters &params) {
 	Php::Value p = params[0];
 
 	if(p.isScalar() && (p == 1.1 || p == 1.2))
-		_soap_version = p.floatValue();
+	    axis2Client->tansportOpts.soap_version = p.floatValue();
 
 	else
 		throw Php::Exception("Unexpected parameter for USE SOAP must be version or boolean");
@@ -244,7 +251,7 @@ Php::Value WSClient :: set_http_method(Php::Parameters &params) {
 		|| v == "DELETE" || v == "delete"
 		))
 	{
-		_http_method = v;
+	    axis2Client->tansportOpts.http_method = v;
 	}
 	else
 		throw Php::Exception("Unexpected parameter for HTTP Method - Expected GET/POST/PUT/DELETE");
@@ -272,7 +279,7 @@ Php::Value WSClient :: set_transport_url(Php::Parameters &params) {
 	if(!p().isString())
 		throw Php::Exception("Unexpected parameter for WSF Transport URL - Expected string");
 
-	this->_transport_url = p().stringValue();
+	axis2Client->tansportOpts.transport_url = p().stringValue();
 	self[WSF_TRANSPORT_URL] = p();
 
 	return self;
@@ -294,9 +301,9 @@ Php::Value WSClient :: set_use_wsa(Php::Parameters &params) {
 	if(p != "1.0" && p != "submission" && p != "disabled")
 		throw Php::Exception("Unexpected parameter for USE WSA - read api doc" );
 
-	_use_wsa = p.stringValue();
+	axis2Client->addressingOpts.use_wsa = p.stringValue();
 
-	self[WSF_USE_WSA] = _use_wsa;
+	self[WSF_USE_WSA] = axis2Client->addressingOpts.use_wsa;
 
 	return this;
 };
@@ -360,7 +367,7 @@ Php::Value WSClient :: set_server_cert(Php::Parameters &params) {
 	Php::Value self(this);
 	Php::Value p = params[0];
 
-	if(p.isString() && !isFileExist(p))
+	if(p.isString() && !axis2Client->isFileExist(p))
 	{
 		throw Php::Exception("The server certificate supplied was not found on system" );
 	}
@@ -369,7 +376,7 @@ Php::Value WSClient :: set_server_cert(Php::Parameters &params) {
 		throw Php::Exception("Unexpected parameter for SSL Server Cert - Expected string" );
 	}
 
-	_ssl_server_key_filename = p.stringValue();
+	axis2Client->sslConf.ssl_server_key_filename = p.stringValue();
 
 	self[WSF_SERVER_CERT] = p;
 
@@ -388,7 +395,7 @@ Php::Value WSClient :: set_client_cert(Php::Parameters &params) {
 	Php::Value self(this);
 	Php::Value p = params[0];
 
-	if(p.isString() && !isFileExist(p))
+	if(p.isString() && !axis2Client->isFileExist(p))
 	{
 		throw Php::Exception("The client certificate supplied was not found on system" );
 	}
@@ -397,7 +404,7 @@ Php::Value WSClient :: set_client_cert(Php::Parameters &params) {
 		throw Php::Exception("Unexpected parameter for SSL Client Cert - Expected string" );
 	}
 
-	_ssl_client_key_filename = p.stringValue();
+	axis2Client->sslConf.ssl_client_key_filename = p.stringValue();
 
 	self[WSF_CLIENT_CERT] = p;
 
@@ -421,7 +428,7 @@ Php::Value WSClient :: set_ssl_passphrase(Php::Parameters &params) {
 		throw Php::Exception("Unexpected parameter for SSL Passphrase - Expected string" );
 	}
 
-	_ssl_passphrase = p.stringValue();
+	axis2Client->sslConf.ssl_passphrase = p.stringValue();
 
 	self[WSF_PASSPHRASE] = p;
 
@@ -443,7 +450,7 @@ Php::Value WSClient :: set_proxy_host(Php::Parameters &params) {
 	if(!p.isString()) {
 		throw Php::Exception("Unexpected parameter for PROXY Host - Expected string" );
 	}
-	_proxy_host = p.stringValue();//
+	axis2Client->proxyConf.proxy_host = p.stringValue();//
 	self[WSF_PROXY_HOST] = p;
 
 	return self;
@@ -464,7 +471,7 @@ Php::Value WSClient :: set_proxy_port(Php::Parameters &params) {
 	if(!p.isScalar()) {
 		throw Php::Exception("Unexpected parameter for PROXY Port - Expected scalar" );
 	}
-	_proxy_port = p.stringValue();
+	axis2Client->proxyConf.proxy_port = p.stringValue();
 	self[WSF_PROXY_PORT] = p;
 
 	return self;
@@ -579,11 +586,11 @@ Php::Value WSClient :: set_ws_reliable(Php::Parameters &params) {
 
 	if(p == 1.0)
 	{
-		_reliable_version = 1;
+	    axis2Client->reliableOpts.reliable_version = 1;
 	}
 	else if(p == 1.1)
 	{
-		_reliable_version = 2;
+	    axis2Client->reliableOpts.reliable_version = 2;
 	}
 
 	self[WSF_RELIABLE] = p;
@@ -697,8 +704,7 @@ Php::Value WSClient :: set_timeout(Php::Parameters &params) {
 	if(!p.isNumeric()) {
 		throw Php::Exception("Unexpected parameter for ws time out - Expected integer" );
 	}
-
-	_timeout = p;
+	axis2Client->tansportOpts.timeout = p;
 
 	self[WSF_TIMEOUT] = p;
 
@@ -766,7 +772,7 @@ Php::Value WSClient :: set_http_auth_username(Php::Parameters &params) {
 	if(!p.isString()) {
 		throw Php::Exception("Unexpected parameter for HTTP AUTH Username - Expected string" );
 	}
-	_http_username = p.stringValue();
+	axis2Client->httpAuth.http_username = p.stringValue();
 
 	self[WSF_HTTP_AUTH_USERNAME] = p;
 
@@ -788,7 +794,7 @@ Php::Value WSClient :: set_http_auth_password(Php::Parameters &params) {
 	if(!p.isString()) {
 		throw Php::Exception("Unexpected parameter for HTTP AUTH password - Expected string" );
 	}
-	_http_password = p.stringValue();
+	axis2Client->httpAuth.http_password = p.stringValue();
 
 	self[WSF_HTTP_AUTH_PASSWORD] = p;
 
@@ -810,8 +816,7 @@ Php::Value WSClient :: set_http_auth_type(Php::Parameters &params) {
 	if(!p.isString()) {
 		throw Php::Exception("Unexpected parameter for HTTP AUTH type - Expected string" );
 	}
-
-	_http_auth_type = p.stringValue();
+	axis2Client->httpAuth.http_auth_type = p.stringValue();
 
 	self[WSF_HTTP_AUTH_TYPE] = p;
 
@@ -833,7 +838,7 @@ Php::Value WSClient :: set_proxy_auth_username(Php::Parameters &params)
 	if(!p.isString()) {
 		throw Php::Exception("Unexpected parameter for Proxy AUTH Username - Expected string" );
 	}
-	_proxy_username = p.stringValue();
+	axis2Client->proxyConf.proxy_username = p.stringValue();
 
 	self[WSF_PROXY_AUTH_USERNAME] = p;
 
@@ -856,7 +861,7 @@ Php::Value WSClient :: set_proxy_auth_password(Php::Parameters &params)
 	if(!p.isString()) {
 		throw Php::Exception("Unexpected parameter for Proxy AUTH password - Expected string" );
 	}
-	_proxy_password = p.stringValue();
+	axis2Client->proxyConf.proxy_password = p.stringValue();
 
 	self[WSF_PROXY_AUTH_PASSWORD] = p;
 
@@ -878,7 +883,7 @@ Php::Value WSClient :: set_proxy_auth_type(Php::Parameters &params)
 	if(!p.isString()) {
 		throw Php::Exception("Unexpected parameter for Proxy AUTH type - Expected string" );
 	}
-	_proxy_auth_type = p.stringValue();
+	axis2Client->proxyConf.proxy_auth_type = p.stringValue();
 
 	self[WSF_PROXY_AUTH_TYPE] = p;
 
@@ -917,11 +922,13 @@ Php::Value WSClient :: set_wsmessage(Php::Parameters &params)
 
 	if(p.isObject() && p.instanceOf("KTWS\\WSMessage"))
     {
-		Php::Value self(this);
+	   Php::Value self(this);
 
-		_wsmessage = (WSMessage *)p.implementation();
+	   WSMessage * wsmessage = (WSMessage*) p.implementation();
 
-		self["message"] = p;
+	   axis2Client->_wsmessage = wsmessage->getAxis2Message();
+
+	   self["ws_message"] = p;
 	}
 	else
 	{
@@ -942,7 +949,7 @@ Php::Value WSClient :: set_wssectoken(Php::Parameters &params)
 	{
 		Php::Value self(this);
 
-		_wssectoken = (WSSecurityToken *)p.implementation();
+		axis2Client->_wssectoken = (WSSecurityToken *)p.implementation();
 
 		self["sec_token"] = p;
 	}
@@ -965,7 +972,7 @@ Php::Value WSClient :: set_wspolicy(Php::Parameters &params)
 	{
 		Php::Value self(this);
 
-		_wspolicy = (WSPolicy *)p.implementation();
+		axis2Client->_wspolicy = (WSPolicy *)p.implementation();
 
 		self["policy"] = p;
 	}
@@ -982,7 +989,11 @@ Php::Value WSClient :: set_wspolicy(Php::Parameters &params)
  */
 Php::Value WSClient :: get_wsmessage()
 {
-	return Php::Object("WSMessage", _wsmessage);
+    Php::Value self(this);
+
+    return self["ws_message"];
+
+	//return Php::Object("KTWS\\WSMessage", axis2Client->_wsmessage);
 }
 
 /**
@@ -990,7 +1001,7 @@ Php::Value WSClient :: get_wsmessage()
  */
 Php::Value WSClient :: get_wssectoken()
 {
-	return Php::Object("WSSecurityToken", _wssectoken);
+	return Php::Object("WSSecurityToken", axis2Client->_wssectoken);
 }
 
 /**
@@ -998,7 +1009,7 @@ Php::Value WSClient :: get_wssectoken()
  */
 Php::Value WSClient :: get_wspolicy()
 {
-	return Php::Object("WSPolicy", _wspolicy);
+	return Php::Object("WSPolicy", axis2Client->_wspolicy);
 }
 
 /**
@@ -1008,5 +1019,5 @@ Php::Value WSClient :: get_debug() {
 
 	Php::out << "----- DEBUG -----" << endl;
 
-	return _wsmessage->_fault->get<string>();
+	return axis2Client->_wsmessage->_fault->get<string>();
 }

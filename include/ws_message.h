@@ -5,6 +5,7 @@
 #include <string>
 #include "ws_const.h"
 #include "ws_header.h"
+#include "axis2_message.h"
 #include <boost/variant.hpp>
 #include <boost/any.hpp>
 #include "param.h"
@@ -16,46 +17,16 @@ using namespace std;
  */
 class WSMessage : public Php::Base {
 
+private:
+
+    /*
+     * Axis2Message, internal Axis2Message pointer holding the whole WSMessage logic
+     */
+    std::shared_ptr<Axis2Message> _axis2_message;
+
 public:
 
-	bool _wsa_must_understand = false;
-
-	std::string _content_type;
-
-	std::string _attachment_content_type = "application/octet-stream";
-
-	std::string _rest_content_type;
-
-	/**
-	 * A URI representing the endpoint URI of the service to be consumed.
-	 * This must be present on the client side. In case WS-Addressing is in use,
-	 * this will be used as the WSA To header.
-	 *
-	 * Additionaly in case of addressing, you can set reference parameters using the following
-	 * array of options as following sample code.
-	 */
-	Param *_endpoint = nullptr;
-
-	Param *_reply_to = nullptr;
-
-	Param *_from     = nullptr;
-
-	Param *_fault    = nullptr;
-
-	Param *_action   = nullptr;
-
-	Param *_payload  = nullptr;
-
-	string _response;
-
-	/***
-	 *
-	 */
-	std::map<std::string,std::string> _attachments_map;
-
-	std::vector<WSHeader *> _wsheader_map;
-
-	/**
+    /**
 	 * c++ ctor
 	 */
 	WSMessage();
@@ -65,21 +36,6 @@ public:
 	 */
 	virtual ~WSMessage();
 
-
-	bool hasAction();
-
-	bool hasPayload();
-
-	bool hasFault();
-
-	bool hasFrom();
-
-	bool hasReply();
-
-	bool hasEndpoint();
-
-	bool hasHeaders();
-
 	/*
 	 * WSMessage PHP __ctor
 	 *
@@ -87,6 +43,17 @@ public:
 	 */
 	void __construct(Php::Parameters &params);
 
+	/*
+	 * Get access to the internal axis2_message object
+	 *
+	 * @return std::shared_ptr<Axis2Message>
+	 */
+	std::shared_ptr<Axis2Message> getAxis2Message()
+	{
+	    std::shared_ptr<Axis2Message> _p = _axis2_message;
+
+	    return _p;
+	}
 
 	Php::Value set_payload(Php::Parameters &params);
 
@@ -110,9 +77,6 @@ public:
 
 	Php::Value set_rest_content_type(Php::Parameters &params);
 
-	template <typename T>
-	T get_headers();
-
 	/**
 	 * Php Getter
 	 */
@@ -132,16 +96,10 @@ public:
 
 	Php::Value get_debug();
 
-
-
-	/**
-	 *
-	 */
-	Param * getPayload();
-
-	Param * getParamByName(const std::string name);
-
 	Php::Value getResponse();
+
+	template <typename T>
+	T get_headers();
 };
 
 #endif

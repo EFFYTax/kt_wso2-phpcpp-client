@@ -4,13 +4,24 @@
 /**
  * c++ ctor
  */
-WSMessage::WSMessage
-(){};
+WSMessage :: WSMessage() {
+
+    _axis2_message = std::make_shared<Axis2Message>();
+};
 
 /**
  *  c++ dtor
  */
 WSMessage :: ~WSMessage(){};
+
+
+/*
+ * WSMessage PHP __ctor
+ *
+ * {{{ proto WSMessage::__construct(mixed payload[, array properties])
+ */
+void WSMessage::__construct
+(Php::Parameters &params){};
 
 /**
  * Request payload being sent or being received
@@ -30,7 +41,7 @@ Php::Value WSMessage :: set_payload(Php::Parameters &params) {
 	if(!p.isString())
 		throw Php::Exception("Unexpected param for WSMessage::$payload, must be a string");
 
-	_payload = new Param(p);
+	_axis2_message->_payload = std::make_shared<Param>(p);
 
 	self["payload"] = p;
 
@@ -56,10 +67,8 @@ Php::Value WSMessage :: set_endpoint(Php::Parameters &params) {
 	if(!p.isString() && !p.isArray())
 		throw Php::Exception("Unexpected param for WSMessage::$to, must be a string or array");
 
-	Param *param = new Param();
-	param->add(p);
-
-	_endpoint = param;
+	_axis2_message->_endpoint = std::make_shared<Param>();
+	_axis2_message->_endpoint->add(p);
 
 	self["endpoint"] = p;
 
@@ -86,9 +95,8 @@ Php::Value WSMessage :: set_action(Php::Parameters &params) {
 	if(!p.isString())
 		throw Php::Exception("Unexpected param for WSMessage::$action, must be a string");
 
-	Param *param = new Param();
-	param->add(p);
-	_action = param;
+	_axis2_message->_action = std::make_shared<Param>();
+	_axis2_message->_action->add(p);
 
 	self[WSF_ACTION] = p;
 
@@ -115,10 +123,8 @@ Php::Value WSMessage :: set_from(Php::Parameters &params) {
 	if(!p.isString() && !p.isArray())
 		throw Php::Exception("Unexpected param for WSMessage::$from, must be a string or array");
 
-	Param *param = new Param();
-	param->add(p);
-
-	_from = param;
+	_axis2_message->_from = std::make_shared<Param>();
+	_axis2_message->_from->add(p);
 
 	self[WSF_FROM] = p;
 
@@ -146,10 +152,8 @@ Php::Value WSMessage :: set_reply_to(Php::Parameters &params) {
 	if(!p.isString() && !p.isArray())
 		throw Php::Exception("Unexpected param for WSMessage::$reply_to, must be a string or array");
 
-	Param *param = new Param();
-	param->add(p);
-
-	_reply_to = param;
+	_axis2_message->_reply_to = std::make_shared<Param>();
+	_axis2_message->_reply_to->add(p);
 
 	self[WSF_REPLY_TO] = p;
 
@@ -176,10 +180,8 @@ Php::Value WSMessage :: set_fault(Php::Parameters &params) {
 	if(!p.isString() && !p.isArray())
 		throw Php::Exception("Unexpected param for WSMessage::$fault_to, must be a string or array");
 
-	Param *param = new Param();
-	param->add(p);
-
-	_fault = param;
+	_axis2_message->_fault = std::make_shared<Param>();
+	_axis2_message->_fault->add(p);
 
 	self[WSF_FAULT_TO] = p;
 
@@ -204,7 +206,7 @@ Php::Value WSMessage :: set_must_understand(Php::Parameters &params) {
 	if(!p.isBool())
 		throw Php::Exception("Unexpected param for WSMessage::$wsa_must_understand, must be a boolean");
 
-	_wsa_must_understand = p;
+	_axis2_message->_wsa_must_understand = p;
 
 	self[WSF_ADDR_MUST_UNDERSTAND] = p;
 
@@ -230,7 +232,7 @@ Php::Value WSMessage :: set_attachments(Php::Parameters &params) {
 	if(!p.isArray())
 		throw Php::Exception("Unexpected param for WSMessage::$attachments, must be a array");
 
-	_attachments_map = p;
+	_axis2_message->_attachments_map = p;
 
 	self[WSF_ATTACHMENTS] = p;
 
@@ -255,7 +257,7 @@ Php::Value WSMessage :: set_attachment_content_type(Php::Parameters &params) {
 	if(!p.isString())
 		throw Php::Exception("Unexpected param for WSMessage::$defaultAttachmentContentType, must be a string");
 
-	_attachment_content_type = p.stringValue();
+	_axis2_message->_attachment_content_type = p.stringValue();
 
 	self[WSF_DEFAULT_ATTACHEMENT_CONTENT_TYPE] = p;
 
@@ -283,7 +285,7 @@ Php::Value WSMessage :: set_headers(Php::Parameters &params) {
 			{
 				WSHeader *object = (WSHeader *)it.second.implementation();
 
-				_wsheader_map.push_back(object);
+				_axis2_message->_wsheader_map.push_back(object);
 			}
 			else throw Php::Exception("Unexpected param for WSMessage::$inputHeaders, must be instance of WSHeader");
 		}
@@ -311,58 +313,11 @@ Php::Value WSMessage :: set_rest_content_type(Php::Parameters &params)
 	if(!p.isString())
 		throw Php::Exception("Unexpected param for WSMessage::contentType, must be a string");
 
-	_rest_content_type = p.stringValue();
+	_axis2_message->_rest_content_type = p.stringValue();
 
 	self["contentType"] = p;
 
 	return this;
-}
-
-/**
- * Proxy to payload
- *
- * @access public
- * @return pointer to <Param>_payload
- */
-Param * WSMessage :: getPayload()
-{
-	return _payload;
-}
-
-/**
- * Proxy to Param object by name
- *
- * TODO: Implement better ( template )
- */
-Param * WSMessage :: getParamByName(const std::string name)
-{
-	if(name == WSF_REPLY_TO && dynamic_cast<Param *>(_reply_to) != NULL)
-	{
-		return _reply_to;
-	}
-	else if(name == WSF_FAULT_TO && dynamic_cast<Param *>(_fault) != NULL)
-	{
-		return _fault;
-	}
-	else if(name == WSF_FROM && dynamic_cast<Param *>(_from) != NULL)
-	{
-		return _from;
-	}
-	else
-	{
-		return nullptr;
-	}
-};
-
-/**
- * Has Message embed headers
- *
- * @access public
- * @return bool
- */
-bool WSMessage :: hasHeaders()
-{
-	return (!_wsheader_map.empty()) ? true : false;
 }
 
 /**
@@ -377,68 +332,15 @@ T WSMessage :: get_headers() {};
 template <>
 Php::Value WSMessage :: get_headers()
 {
-	return Php::Array(_wsheader_map);
+	return Php::Array(_axis2_message->_wsheader_map);
 }
-
-/**
- * Specialisation for vector
- */
-template <>
-std::vector<WSHeader *> WSMessage :: get_headers()
-{
-	return _wsheader_map;
-}
-
 
 Php::Value WSMessage :: get_debug()
 {
 	return this;
 }
 
-/**
- *
- */
-bool WSMessage :: hasAction()
-{
-	return (_action) ? true : false;
-};
-
-bool WSMessage :: hasPayload()
-{
-	return (_payload) ? true : false;
-};
-
-bool WSMessage :: hasFault()
-{
-	return (_fault) ? true : false;
-};
-
-bool WSMessage :: hasFrom()
-{
-	return (_from) ? true : false;
-};
-
-bool WSMessage :: hasReply()
-{
-	return (_reply_to) ? true : false;
-};
-
-bool WSMessage :: hasEndpoint()
-{
-	return (_endpoint) ? true : false;
-};
-
 Php::Value WSMessage :: getResponse()
 {
-	return _response;
+	return _axis2_message->_response;
 }
-
-
-/*
- * WSMessage PHP __ctor
- *
- * {{{ proto WSMessage::__construct(mixed payload[, array properties])
- */
-void WSMessage::__construct(Php::Parameters &params)
-{
-};

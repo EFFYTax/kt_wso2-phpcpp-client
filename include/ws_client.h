@@ -21,17 +21,19 @@
 #include <axutil_env.h>
 #include <axis2_const.h>
 #include <axis2/axis2_client.h>
-
 #include <ws_const.h>
 
 using namespace std;
 
 class WSClient
-		: public Axis2Client,
-		  public Php::Base {
+		  :public Php::Base {
 
 private:
-	//std::map<std::string,std::string> _reference_parameters;
+
+    /**
+     * Shared ptr holding the Axis2Client
+     */
+    std::shared_ptr<Axis2Client> axis2Client;
 
 public:
 

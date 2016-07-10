@@ -13,67 +13,73 @@
 #include <boost/format.hpp>
 #include <string.h>
 #include "ws_const.h"
-
+#include <ktws_struct.h>
 
 class Axis2Core {
 
-private:
-
-protected:
-	axutil_env_t *_env 		  		  = NULL;
-
-	axutil_env_t *_ws_env_svr 		  = NULL;
-
-	//axis2 home directory
-	std::string _axis2_directory ;
-
-	//axis2c log level
-	int _axis2_log_level;
-
-	//axis2c log path
-	std::string _axis2_log_path;
-
-	//axis2c log file
-	std::string _axis2_log_file;
-
-	//
-	void create_env();
-
-	int ws_is_svr = 0;
-
 public:
 
-	Axis2Core();
+    Axis2Config a2config;
 
+    /*
+     * Axis2 Memory allocator, we use the default implementation ( @see axutil_allocator_free_impl )
+     */
+    std::unique_ptr<axutil_allocator_t, std::function<void(axutil_allocator_t *)>> allocator{nullptr,
+        [&](axutil_allocator_t * p){ axutil_env_free(env.get()); }
+    };
+
+    /*
+     * Axis2 Error, Valgrind reported that it will be free'd by axutil_allocator_free_impl
+     */
+    std::unique_ptr<axutil_error_t, std::function<void(axutil_error_t *)>> error{nullptr,
+        [](axutil_error_t * p){}
+    };
+
+    /*
+     * Axis2 Log, Valgrind reported that it will be free'd by axutil_allocator_free_impl
+     */
+    std::unique_ptr<axutil_log_t, std::function<void(axutil_log_t *)>> _log{nullptr,
+        [](axutil_log_t * p){}
+    };
+
+    /*
+     * Axis2 Thread pool, Valgrind reported that it will be free'd by axutil_allocator_free_impl
+     */
+    std::unique_ptr<axutil_thread_pool_t, std::function<void(axutil_thread_pool_t *)>> thread_pool{nullptr,
+        [](axutil_thread_pool_t * p){}
+    };
+
+    /*
+     * Init the Axis2 environement
+     *
+     * @return void
+     */
+    void initEnvironment();
+
+    /*
+     * Axis2 environement, Valgrind reported that it will be free'd by axutil_allocator_free_impl
+     */
+    std::unique_ptr<axutil_env_t, std::function<void (axutil_env_t *)>> env{nullptr,
+        [&](axutil_env_t *p ){}
+    };
+
+	/**
+	 * TODO: Implement
+	 */
+	int ws_is_svr = 0;
+
+	/**
+	 * c++ ctor
+	 */
+	Axis2Core(const Axis2Config& configuration);
+
+	/**
+	 * c++ dtor
+	 */
 	virtual ~Axis2Core();
 
 	/**
-	 * efree wrapper used for Axis2 environemment
-	 *
-	 * @param  axutil_allocator_t * allocator
-	 * @param  void *ptr
-	 * @access static
-	 * @return void
-	 */
-	static void free_wrapper_cli(axutil_allocator_t * allocator, void *ptr);
-
-	/**
-	 * malloc wrapper used for Axis2 environemment
-	 *
-	 * @param  axutil_allocator_t * allocator
-	 * @param  size_t size
-	 * @access static
-	 * @return void
-	 */
-	static void *malloc_wrapper_cli(axutil_allocator_t * allocator, size_t size);
-
-	/**
-	 * realloc wrapper used for Axis2 environemment
-	 */
-	static void *realloc_warpper_cli(axutil_allocator_t * allocator,void *ptr,size_t size);
-
-	/**
-	 *
+	 * Is a file Exist ?
 	 */
 	bool isFileExist (const std::string& name);
 
@@ -81,20 +87,6 @@ public:
 	 *
 	 */
 	void log(const std::string v, const std::string file, int line);
-
-	/**
-	 *
-	 */
-	void set_module_param_option (
-	    axis2_char_t       * module_name,
-	    axis2_char_t       * module_option,
-	    axis2_char_t       * module_option_value,
-		axis2_svc_client_t * svc_client);
-
-	/**
-	 *
-	 */
-	axis2_char_t * get_axis2_char_ptr(std::string str);
 };
 
 #endif

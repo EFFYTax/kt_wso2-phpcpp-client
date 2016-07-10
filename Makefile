@@ -41,7 +41,7 @@ INI_DIR				=	/opt/php-5.6/etc
 #	this with a different fixed directory
 #
 
-EXTENSION_DIR		=   /opt/php-5.6/lib/php/extensions/debug-non-zts-20131226	
+EXTENSION_DIR		=   /opt/php-5.6/lib/php/extensions/no-debug-non-zts-20131226	
 
 
 #
@@ -87,7 +87,7 @@ LINKER				=	g++
 
 COMPILER_FLAGS		=	-Wall -c -g3 -fvisibility=hidden -Wno-write-strings -I./include -I./include/neethi -I./include/axis2 -I../kt_axis2c-unofficial/util/src -I/opt/php-5.6/include/php/Zend -I/opt/php-5.6/include/php/TSRM -I/opt/php-5.6/include/php -I/opt/php-5.6/include/php/main -I../kt_sandesha2/include -I../kt_axis2c-unofficial/include -I../kt_axis2c-unofficial/util/include -I../kt_axis2c-unofficial/axiom/include -I../kt_axis2c-unofficial/neethi/include -I../kt_rampart/include -I/usr/include/boost -I./neethi -std=c++11 -fpic -o
 LINKER_FLAGS		=	-shared 
-LINKER_DEPENDENCIES	=	-lphpcpp -L/usr/local/axis2c/lib -laxutil -laxis2_engine -laxis2_axiom -laxis2_http_receiver -laxis2_http_sender -laxis2_parser -laxis2_tcp_receiver -laxis2_tcp_sender -laxis2_xpath -lguththila -lneethi -lsandesha2 -lsandesha2_client -lrampart -L /usr/lib/x86_64-linux-gnu -lxml2 
+LINKER_DEPENDENCIES	=	-L /usr/lib/x86_64-linux-gnu -L/usr/local/axis2c/lib -lxml2 -lphpcpp -laxis2_parser -laxis2_axiom -laxis2_engine -laxutil -laxis2_http_sender -laxis2_http_receiver -lrampart -lneethi -lsandesha2_client  -laxis2_tcp_receiver -laxis2_tcp_sender -laxis2_xpath   -lguththila     -lsandesha2  -lsavan_client -lsavan_msgreceivers -lsavan_publisher -lsavan_subs_mgr -lsavan_util 
 
 
 #
@@ -110,7 +110,7 @@ MKDIR				=	mkdir -p
 #	file, with the .cpp extension being replaced by .o.
 #
 
-SOURCES				=	src/neethi/options.cpp  extension.cpp src/axis2/axis2_core.cpp src/axis2/axis2_client.cpp src/ws_client.cpp src/ws_client_proxy.cpp  src/ws_data.cpp src/ws_fault.cpp src/ws_header.cpp src/ws_message.cpp src/ws_policy.cpp src/ws_security_token.cpp src/ws_utils.cpp src/param.cpp
+SOURCES				=	src/neethi/options.cpp extension.cpp src/axis2/axis2_core.cpp src/axis2/axis2_client.cpp src/axis2/axis2_message.cpp src/ws_client.cpp src/ws_client_proxy.cpp  src/ws_data.cpp src/ws_fault.cpp src/ws_header.cpp src/ws_message.cpp src/ws_policy.cpp src/ws_security_token.cpp src/ws_utils.cpp src/param.cpp
 OBJECTS				=	$(SOURCES:%.cpp=%.o)
 
 
