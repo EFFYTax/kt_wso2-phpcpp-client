@@ -403,17 +403,17 @@ void Axis2Client :: setEndpointAndSoapAction()
 	if(_wsmessage->hasEndpoint())
 	{
 		//The endpoint can be a string
-		if(_wsmessage->_endpoint->is_string())
+		if(_wsmessage->getEndpoint()->is_string())
 		{
 			to_epr = axis2_endpoint_ref_create (
-				env.get(), _wsmessage->_endpoint->get<const char *>()
+				env.get(), _wsmessage->getEndpoint()->get<const char *>()
 			);
 		}
 		else
 		{
 			//This will set endpoint w/ params and metas
 			to_epr = add_endpoint_values_ref(
-				_wsmessage->_endpoint->get<map<string,vector<string>>>()
+				_wsmessage->getEndpoint()->get<map<string,vector<string>>>()
 			);
 		}
 	}
@@ -439,7 +439,7 @@ void Axis2Client :: setEndpointAndSoapAction()
 	//if client_options
 	if(_wsmessage->hasAction())
 	{
-	    string action = _wsmessage->_action->get<string>();
+	    string action = _wsmessage->getAction()->get<string>();
 
 	    std::vector<char> char_action(action.data(), action.data() + action.size() + 1u);
 
@@ -465,11 +465,11 @@ void Axis2Client :: setWSAOpts() {
 	{
 		if(_wsmessage->hasAction())
 		{
-			axis2_options_set_action (_client_options.get(), env.get(), _wsmessage->_action->get<const char *>());
+			axis2_options_set_action (_client_options.get(), env.get(), _wsmessage->getAction()->get<const char *>());
 			addressingOpts.is_addr_action_present = true;
 
 			log((boost::format("Addressing action is :- %1%")
-				% _wsmessage->_action->get<const char *>()).str(), __FILE__,__LINE__);
+				% _wsmessage->getAction()->get<const char *>()).str(), __FILE__,__LINE__);
 		}
 
 		//Lambda handling addressing by type
@@ -1292,7 +1292,7 @@ string Axis2Client::get_soap_fault_detail(axiom_node_t *detail_node, axiom_eleme
  */
 string Axis2Client::get_soap_fault_reason(axiom_node_t *reason_node, axiom_element_t *reason_element)
 {
-	axis2_char_t *text_value = NULL;
+	axis2_char_t *text_value = nullptr;
 
 	if([this]()->int { return tansportOpts.soap_version == 1.1 ? 1 : 2; }() == AXIOM_SOAP12)
 	{
@@ -1309,6 +1309,9 @@ string Axis2Client::get_soap_fault_reason(axiom_node_t *reason_node, axiom_eleme
 	{
 		text_value = axiom_element_get_text(reason_element, env.get(), reason_node);
 	}
+
+	if(!text_value)
+	    text_value = "n/a";
 
 	return text_value;
 }
@@ -1331,6 +1334,9 @@ string Axis2Client::get_soap_fault_code(axiom_node_t *code_node, axiom_element_t
 	{
 		code 		   = axiom_element_get_text(code_element, env.get(), code_node);
 	}
+
+	if(!code)
+	    code = "n/a";
 
 	return code;
 }

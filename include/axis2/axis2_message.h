@@ -13,24 +13,69 @@ class Axis2Message {
 public:
 
     /**
-     * A URI representing the endpoint URI of the service to be consumed.
-     * This must be present on the client side. In case WS-Addressing is in use,
-     * this will be used as the WSA To header.
+    * A URI representing the endpoint URI of the service to be consumed.
+    * This must be present on the client side. In case WS-Addressing is in use,
+    * this will be used as the WSA To header.
+    *
+    * Additionaly in case of addressing, you can set reference parameters using the following
+    * array of options as following sample code.
+    */
+   std::shared_ptr<Param> _endpoint{nullptr};
+
+   std::shared_ptr<Param> _reply_to{nullptr};
+
+   std::shared_ptr<Param> _from{nullptr};
+
+   std::shared_ptr<Param> _fault{nullptr};
+
+   std::shared_ptr<Param> _action{nullptr};
+
+   std::shared_ptr<Param> _payload{nullptr};
+
+    /*
      *
-     * Additionaly in case of addressing, you can set reference parameters using the following
-     * array of options as following sample code.
      */
-    std::shared_ptr<Param> _endpoint{nullptr};
+    Param * getEndpoint() {
+        Param * _p = _endpoint.get();
 
-    std::shared_ptr<Param> _reply_to{nullptr};
+        return _p;
+    }
 
-    std::shared_ptr<Param> _from{nullptr};
+    /*
+     *
+     */
+    Param * getReplyTo() {
+        Param * _p = _reply_to.get();
 
-    std::shared_ptr<Param> _fault{nullptr};
+        return _p;
+    }
 
-    std::shared_ptr<Param> _action{nullptr};
+    /*
+     *
+     */
+    Param * getFrom() {
+        Param * _p = _from.get();
 
-    std::shared_ptr<Param> _payload{nullptr};
+        return _p;
+    }
+
+    /*
+     *
+     */
+    Param * getFault() {
+        Param * _p = _fault.get();
+
+        return _p;
+    }
+
+    /**
+     *
+     */
+    Param  * getAction() {
+        Param * _p = _action.get();
+
+        return _p;
+    }
 
     bool _wsa_must_understand = false;
 

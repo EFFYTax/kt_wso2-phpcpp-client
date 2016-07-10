@@ -1019,5 +1019,5 @@ Php::Value WSClient :: get_debug() {
 
 	Php::out << "----- DEBUG -----" << endl;
 
-	return axis2Client->_wsmessage->_fault->get<string>();
+	return axis2Client->_wsmessage->getFault()->get<string>();
 }
