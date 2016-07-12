@@ -250,6 +250,9 @@ $WSClient
 ->setHTTPPassword("pasword")
 ->setHTTPAuth("Basic");
 
+//Timeout in sec
+->setTimeout(30)
+
 //Mandatory if working w/ SSL
 ->setSSLServerCert("Absolute path to SSL CA");
 ```
@@ -271,9 +274,66 @@ try {
 
 ###WS-RM / Reliable Messaging
 
-One way channel is not implemented, i still need to investigate why WSO2 team disabled this feature.
-However, Sandesha2/c, the module handling WS-Reliable is loaded by default. 
+Work in progress, Sandesha2/c is loaded by default. I successfully created a two-way channel with a successfull CreateSequence : 
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+   <soapenv:Header xmlns:wsa="http://www.w3.org/2005/08/addressing">
+      <wsa:To>http://localhost:2080</wsa:To>
+      <wsa:Action>http://schemas.xmlsoap.org/ws/2005/02/rm/CreateSequence</wsa:Action>
+      <wsa:ReplyTo>
+         <wsa:Address>http://www.w3.org/2005/08/addressing/anonymous</wsa:Address>
+      </wsa:ReplyTo>
+      <wsa:MessageID>urn:uuid:b13cec5a-4868-1e61-22c6-000c290a6b1d</wsa:MessageID>
+      <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" soapenv:mustUnderstand="1" />
+   </soapenv:Header>
+   <soapenv:Body>
+      <wsrm:CreateSequence xmlns:wsrm="http://schemas.xmlsoap.org/ws/2005/02/rm">
+         <wsrm:AcksTo>
+            <wsa:Address xmlns:wsa="http://www.w3.org/2005/08/addressing">http://www.w3.org/2005/08/addressing/anonymous</wsa:Address>
+         </wsrm:AcksTo>
+         <wsrm:Offer>
+            <wsrm:Identifier>b13d1338-4868-1e61-22c7-000c290a6b1d</wsrm:Identifier>
+         </wsrm:Offer>
+      </wsrm:CreateSequence>
+   </soapenv:Body>
+</soapenv:Envelope>
+```
+
+the policy used is : 
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<wsp:Policy xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:sanc="http://ws.apache.org/sandesha2/c/policy" xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702" xmlns:wsrm="http://schemas.xmlsoap.org/ws/2005/02/rm/policy" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="RmPolicy">
+   <wsp:ExactlyOne>
+      <wsp:All>
+         <sp:TransportBinding>
+            <wsp:Policy />
+         </sp:TransportBinding>
+         <wsrm:RMAssertion>
+            <wsrm:InactivityTimeout Milliseconds="600000" />
+            <wsrm:AcknowledgementInterval Milliseconds="200" />
+            <wsrm:BaseRetransmissionInterval Milliseconds="2" />
+            <wsrm:ExponentialBackoff />
+            <sanc:InactivityTimeout>64</sanc:InactivityTimeout>
+            <sanc:StorageManager>persistent</sanc:StorageManager>
+            <sanc:MessageTypesToDrop>none</sanc:MessageTypesToDrop>
+            <sanc:MaxRetransCount>4</sanc:MaxRetransCount>
+            <sanc:SenderSleepTime>1</sanc:SenderSleepTime>
+            <!--In seconds-->
+            <sanc:InvokerSleepTime>1</sanc:InvokerSleepTime>
+            <sanc:PollingWaitTime>4</sanc:PollingWaitTime>
+            <sanc:TerminateDelay>4</sanc:TerminateDelay>
+         </wsrm:RMAssertion>
+      </wsp:All>
+   </wsp:ExactlyOne>
+</wsp:Policy>
+
+```
+
 
 #Credits 
  - Alexis Gruet <alexis.gruet@kroknet.com>
- - WSO2 team 
+ - WSO2 team
+ - PHP-CPP team
