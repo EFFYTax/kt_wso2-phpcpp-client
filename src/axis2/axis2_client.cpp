@@ -240,8 +240,8 @@ void Axis2Client :: setProxy()
 	if (!proxyConf.proxy_host.empty() && !proxyConf.proxy_port.empty())
 	{
 	    //set proxy need mutable char ptr
-	    std::vector<char> proxy_host(proxy_host.data(), proxy_host.data() + proxy_host.size() + 1u);
-	    std::vector<char> proxy_port(proxy_port.data(), proxy_port.data() + proxy_port.size() + 1u);
+	    std::vector<char> proxy_host(proxyConf.proxy_host.data(), proxyConf.proxy_host.data() + proxyConf.proxy_host.size() + 1u);
+	    std::vector<char> proxy_port(proxyConf.proxy_port.data(), proxyConf.proxy_port.data() + proxyConf.proxy_port.size() + 1u);
 
 		axis2_svc_client_set_proxy (
 			_svc_client.get(),

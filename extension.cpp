@@ -55,6 +55,12 @@ extern "C" {
         wsclient.method<&WSClient::set_wsa_address>         ("setWSAddress");
         wsclient.method<&WSClient::set_wsa_ref_params>      ("setWSARefParams");
 
+        //Proxy
+        wsclient.method<&WSClient::set_proxy_auth_username>  ("setProxyUsername");
+        wsclient.method<&WSClient::set_proxy_auth_password>  ("setProxyPassword");
+        wsclient.method<&WSClient::set_proxy_auth_type>      ("setProxyAuthType");
+        wsclient.method<&WSClient::set_proxy_host>           ("setProxyHost");
+        wsclient.method<&WSClient::set_proxy_port>           ("setProxyPort");
 
         //Use SSL
         wsclient.method<&WSClient::set_client_cert>         ("setSSLClientCert");

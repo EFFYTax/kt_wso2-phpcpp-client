@@ -142,6 +142,9 @@ void WSClient :: request() {
 	axis2Client->setTimeout();
 	//axis2Client->setWSReliableOpts();
 
+	axis2Client->response.payload.reset(axis2_svc_client_send_receive (
+	        axis2Client->_svc_client.get(), axis2Client->env.get(), axis2Client->_request_payload.get()));
+
 /*
  * TODO: Implement
  */
@@ -444,7 +447,8 @@ Php::Value WSClient :: set_proxy_host(Php::Parameters &params) {
 		throw Php::Exception("Unexpected parameter for PROXY Host - Expected string" );
 	}
 	axis2Client->proxyConf.proxy_host = p.stringValue();//
-	self[WSF_PROXY_HOST] = p;
+
+	self["proxyHost"] = p;
 
 	return self;
 };
@@ -465,6 +469,7 @@ Php::Value WSClient :: set_proxy_port(Php::Parameters &params) {
 		throw Php::Exception("Unexpected parameter for PROXY Port - Expected scalar" );
 	}
 	axis2Client->proxyConf.proxy_port = p.stringValue();
+
 	self[WSF_PROXY_PORT] = p;
 
 	return self;
