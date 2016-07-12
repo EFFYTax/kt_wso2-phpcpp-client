@@ -111,10 +111,45 @@ XML;
 $WSPolicy->setXMLPolicy($policy_xml);
 ```
 
-###Security Token ( Username Token )
+###Security Token 
+`KTWS\SecurityToken` and `KTWS\WSPolicy` provide a nice API to deal with WS-Security. WS-Security relay heavily on Rampart/c and neethi/c, both are modules for axis2/c 
+
+Example for Username Token 
 ```
-$WSSecToken->setUser("username")->setPassword("password");
+$WSSecToken
+->setUser("username")
+->setPassword("password");
 ```
+In order to use this scenario, you must implement a valid Policy through `KTWS\WSPolicy`
+
+```
+$my_policy = <<<XML
+<wsp:Policy wsu:Id="RmPolicy" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsrm="http://schemas.xmlsoap.org/ws/2005/02/rm/policy" xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702" xmlns:sanc="http://ws.apache.org/sandesha2/c/policy" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+    <wsp:ExactlyOne>
+        <wsp:All>
+	<sp:TransportBinding>
+                <wsp:Policy>
+                </wsp:Policy>
+            </sp:TransportBinding>
+            <sp:SignedSupportingTokens>
+                <wsp:Policy>
+                    <sp:UsernameToken
+                        sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
+                        <wsp:Policy>
+                            <sp:WssUsernameToken10 />
+                        </wsp:Policy>
+                    </sp:UsernameToken>
+                </wsp:Policy>
+            </sp:SignedSupportingTokens
+        </wsrm:RMAssertion>
+        </wsp:All>
+    </wsp:ExactlyOne>
+</wsp:Policy>
+XML;
+
+$WSPolicy->setXMLPolicy($my_policy);
+```
+
 
 ###WSMessage
 
@@ -191,18 +226,38 @@ This method expect :
 ###WSClient
 ```
 $WSClient
+
+//Soap version 1.1 or 1.2
 ->setSoapVersion(1.2)
+
+//Work w/ REST
+->disableSoap()
+
+//
 ->setMessage($WSMessage)
 ->setSecToken($WSSecToken)
 ->setPolicy($WSPolicy)
-->setSSLServerCert("Absolute path to SSL CA"); //Mandatory if working w/ SSL
+
+//Proxy
+->setProxyHost("127.0.0.1")
+->setProxyPort("8080")
+->setProxyUsername("proxyUsername")
+->setProxyPassword("proxyPassword")
+->setProxyAuthType("proxyAuth")
+
+//HTTP Auth
+->setHTTPUsername("username")
+->setHTTPPassword("pasword")
+->setHTTPAuth("Basic");
+
+//Mandatory if working w/ SSL
+->setSSLServerCert("Absolute path to SSL CA");
 ```
 
 ###Requesting
 
 ```
 try {
-
 	$WSClient->request();
 	
 	print_r($WSMessage->getResponse());
@@ -214,6 +269,11 @@ try {
 }
 ```
 
+###WS-RM / Reliable Messaging
+
+One way channel is not implemented, i still need to investigate why WSO2 team disabled this feature.
+However, Sandesha2/c, the module handling WS-Reliable is loaded by default. 
+
 #Credits 
-- Alexis Gruet <alexis.gruet@kroknet.com>
-- WSO2 team 
+ - Alexis Gruet <alexis.gruet@kroknet.com>
+ - WSO2 team 
