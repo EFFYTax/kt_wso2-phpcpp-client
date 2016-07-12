@@ -190,12 +190,63 @@ public:
 	//Big Hack...@see create_header_node
 	int _ns_index = 0;
 
-	FaultType handle_soap_fault(axiom_soap_fault_t * soap_fault);
-	string get_soap_fault_code(axiom_node_t *code_node, axiom_element_t *code_element);
-	string get_soap_fault_reason(axiom_node_t *reason_node, axiom_element_t *reason_element);
-	string get_soap_fault_detail(axiom_node_t *detail_node, axiom_element_t *detail_element);
+	/*
+	 * Parse the whole axiom soap fault and get the soap fault attributes
+	 *
+	 * @return struct FaultType
+	 */
+	FaultType HandleSoapFault(axiom_soap_fault_t * soap_fault);
 
-	axiom_node_t            * create_header_node(WSHeader *wsheader, axiom_node_t *parent, axis2_char_t *soap_uri, int soap_version);
+	/*
+	 * Is the fault code by local name is found
+	 */
+	bool isFaultCodeByLocalName(char * localname);
+
+	/*
+	 * Is the fault reason by local name is found
+	 */
+	bool isFaultReasonByLocalName(char * localname);
+
+	/*
+	 * Is the fault detail by local name is found
+	 */
+	bool isFaultDetailByLocalName(char * localname);
+
+	/*
+	 * Is the fault role by local name is found
+	 */
+	bool isFaultRoleByLocalName(char * localname);
+
+	/*
+	 * Get the soap fault detail from axiom element and node
+	 *
+	 * @return string
+	 */
+	std::string getSoapFaultDetail(axiom_node_t *detail_node, axiom_element_t *detail_element);
+
+	/*
+	 * Get the soap fault reason from axiom element and node
+	 *
+	 * @return string
+	 */
+	std::string getSoapFaultReason(axiom_node_t *reason_node, axiom_element_t *reason_element);
+
+	/*
+	 * Get the soap fault code from axiom element and node
+	 *
+	 * @return string
+	 */
+	std::string getSoapFaultCode(axiom_node_t *code_node, axiom_element_t *code_element);
+
+	/*
+	 * Get the soap role uri from axiom element and node
+	 *
+	 * @return string
+	 */
+	std::string getSoapFaultRoleUri(axiom_node_t *role_node, axiom_element_t *role_element);
+
+
+	axiom_node_t * createNodeHeader(WSHeader * a2Header, axiom_node_t *parent, axis2_char_t *soap_uri);
 
 	/*
 	 * Axis2 Service client
@@ -219,13 +270,31 @@ public:
 	 * Note : the delete lambda will free
 	 */
 	std::unique_ptr<axiom_node_t, std::function<void (axiom_node_t *)>> _request_payload {nullptr, [&](axiom_node_t *p )->void {
-	    if(p) axis2_options_set_xml_parser_reset(_client_options.get(), env.get(), 1);
+	    //Always free'd by axiom_soap_envelope_free [valgrind]
 	}};
 
 	/**
 	 * Get ptr Axiom Root Element by XML String.
 	 */
-	virtual std::unique_ptr<axiom_node_t, std::function<void(axiom_node_t *)>> getAxiomRootElementByXMLString(string str);
+	virtual axiom_node_t * getAxiomByXMLString(string str);
+
+
+	/**
+	 * Get engine configuration
+	 */
+	virtual axis2_conf_t * getEngineConfiguration();
+
+	/**
+	 * Add param to current engine configuration
+	 */
+	int addEngineParam(axutil_param_t * param);
+
+	/*
+	 * Creates endpoint reference struct.
+	 *
+	 * @private
+	 */
+	void createEndpointRef();
 
 	/**
 	 * Set a Proxy for client
@@ -330,6 +399,21 @@ public:
 	virtual string getSoapResponse();
 
 	/*
+	 * Gets SOAP version URI.
+	 */
+	virtual std::vector<char> getSoapVersionURI();
+
+	/*
+	 * Get SoapVersion
+	 */
+	virtual int getSoapVersion();
+
+	/*
+	 * Set Transport URL
+	 */
+	void setTransportUrl();
+
+	/*
 	 * Has soap fault
 	 *
 	 * @return boolean
@@ -367,17 +451,6 @@ public:
 	WSPolicy 	 		* _wspolicy = nullptr;
 
 	axis2_endpoint_ref_t    * add_endpoint_values_ref(MAP param);
-
-	/**
-	 *	Get Options / service client
-	 */
-	virtual axis2_options_t     * get_options();
-
-	virtual axis2_char_t        * get_soap_version_uri();
-	virtual int					  get_soap_version();
-
-	//
-
 };
 
 #endif

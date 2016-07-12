@@ -117,7 +117,7 @@ void WSClient :: request() {
     axis2Client->log((boost::format("ktws::payload is ready :: %1%")
 		% axis2Client->_wsmessage->getPayload()->get<string>()).str(), __FILE__,__LINE__);
 
-	axis2Client->_request_payload = axis2Client->getAxiomRootElementByXMLString(axis2Client->_wsmessage->getPayload()->get<string>());
+	axis2Client->_request_payload.reset(axis2Client->getAxiomByXMLString(axis2Client->_wsmessage->getPayload()->get<string>()));
 
 	if (!axis2Client->_request_payload)
 	{
@@ -135,6 +135,7 @@ void WSClient :: request() {
 
 	axis2Client->setSoapVersion();
 	axis2Client->setHttpTransport();
+	axis2Client->setTransportUrl();
 	axis2Client->setEndpointAndSoapAction();
 	axis2Client->setWSAOpts();
 	axis2Client->setSoapHeaders();
@@ -270,17 +271,14 @@ Php::Value WSClient :: set_http_method(Php::Parameters &params) {
  */
 Php::Value WSClient :: set_transport_url(Php::Parameters &params) {
 
-	auto p = [params] ()->Php::Value {
-		Php::Value p = params[0];
-		return p.isArray() ? p[WSF_TRANSPORT_URL] : p;
-	};
 	Php::Value self(this);
+	Php::Value p = params[0];
 
-	if(!p().isString())
+	if(!p.isString())
 		throw Php::Exception("Unexpected parameter for WSF Transport URL - Expected string");
 
-	axis2Client->tansportOpts.transport_url = p().stringValue();
-	self[WSF_TRANSPORT_URL] = p();
+	axis2Client->tansportOpts.transport_url = p.stringValue();
+	self["transportURL"] = p;
 
 	return self;
 };
@@ -303,7 +301,7 @@ Php::Value WSClient :: set_use_wsa(Php::Parameters &params) {
 
 	axis2Client->addressingOpts.use_wsa = p.stringValue();
 
-	self[WSF_USE_WSA] = axis2Client->addressingOpts.use_wsa;
+	self["useWSA"] = axis2Client->addressingOpts.use_wsa;
 
 	return this;
 };

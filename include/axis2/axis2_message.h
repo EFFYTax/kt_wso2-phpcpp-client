@@ -32,7 +32,7 @@ public:
 
    std::shared_ptr<Param> _payload{nullptr};
 
-    /*
+       /*
      *
      */
     Param * getEndpoint() {
@@ -89,6 +89,9 @@ public:
 
     std::map<std::string,std::string> _attachments_map;
 
+    /**
+     * Get WSHeader
+     */
     std::vector<WSHeader *> _wsheader_map;
 
     bool hasAction();

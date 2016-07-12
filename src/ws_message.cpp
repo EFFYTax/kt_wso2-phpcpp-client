@@ -5,7 +5,6 @@
  * c++ ctor
  */
 WSMessage :: WSMessage() {
-
     _axis2_message = std::make_shared<Axis2Message>();
 };
 
@@ -283,7 +282,7 @@ Php::Value WSMessage :: set_headers(Php::Parameters &params) {
 		{
 			if(it.second.instanceOf("KTWS\\WSHeader"))
 			{
-				WSHeader *object = (WSHeader *)it.second.implementation();
+				WSHeader * object = (WSHeader *)it.second.implementation();
 
 				_axis2_message->_wsheader_map.push_back(object);
 			}
@@ -330,17 +329,17 @@ T WSMessage :: get_headers() {};
  * Specialisation for headers
  */
 template <>
-Php::Value WSMessage :: get_headers()
-{
-	return Php::Array(_axis2_message->_wsheader_map);
-}
+Php::Value WSMessage :: get_headers()           { return Php::Array(_axis2_message->_wsheader_map); }
 
-Php::Value WSMessage :: get_debug()
-{
-	return this;
-}
+//
+Php::Value WSMessage :: get_debug()             { return 0; }
+Php::Value WSMessage :: getResponse()           { return _axis2_message->_response; }
+Php::Value WSMessage :: get_payload()           { return _axis2_message->getPayload()->get<std::string>(); }
+Php::Value WSMessage :: get_from()              { return _axis2_message->getFrom()->get<std::string>(); }
+Php::Value WSMessage :: get_endpoint()          { return _axis2_message->getEndpoint()->get<std::string>(); };
+Php::Value WSMessage :: get_action()            { return _axis2_message->getAction()->get<std::string>(); };
+Php::Value WSMessage :: get_reply_to()          { return _axis2_message->getReplyTo()->get<std::string>(); }
+Php::Value WSMessage :: get_fault()             { return _axis2_message->getFault()->get<std::string>(); }
+Php::Value WSMessage :: is_must_understand()    { return _axis2_message->_wsa_must_understand; }
+Php::Value WSMessage :: get_rest_content_type() { return _axis2_message->_rest_content_type; }
 
-Php::Value WSMessage :: getResponse()
-{
-	return _axis2_message->_response;
-}

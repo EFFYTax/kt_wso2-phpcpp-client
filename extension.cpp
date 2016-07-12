@@ -11,6 +11,7 @@
 #include "include/ws_utils.h"
 #include "include/ws_version.h"
 
+
 /**
  *  tell the compiler that the get_module is a pure C function
  */
@@ -37,34 +38,34 @@ extern "C" {
         Php::Class<WSSecurityToken> wssecuritytoken ("WSSecurityToken");
 
         // WSClient - Registering methods
-        wsclient.method<&WSClient::__construct>    ("__construct");
-        wsclient.method<&WSClient::request> 	   ("request");
-        wsclient.method<&WSClient::set_wsmessage>  ("setMessage");
-        wsclient.method<&WSClient::set_wssectoken> ("setSecToken");
-        wsclient.method<&WSClient::set_wspolicy>   ("setPolicy");
-        wsclient.method<&WSClient::get_wsmessage>  ("getMessage");
-        wsclient.method<&WSClient::get_wssectoken> ("getSecToken");
-        wsclient.method<&WSClient::disable_soap>   ("disableSoap");
+        wsclient.method<&WSClient::__construct>             ("__construct");
+        wsclient.method<&WSClient::request> 	            ("request");
+        wsclient.method<&WSClient::set_wsmessage>           ("setMessage");
+        wsclient.method<&WSClient::set_wssectoken>          ("setSecToken");
+        wsclient.method<&WSClient::set_wspolicy>            ("setPolicy");
+        wsclient.method<&WSClient::get_wsmessage>           ("getMessage");
+        wsclient.method<&WSClient::get_wssectoken>          ("getSecToken");
+        wsclient.method<&WSClient::disable_soap>            ("disableSoap");
 
         //Use WSA
-        wsclient.method<&WSClient::set_use_wsa>    ("setWSA");
+        wsclient.method<&WSClient::set_use_wsa>             ("setWSA");
 
         //Use SSL
-        wsclient.method<&WSClient::set_client_cert>    ("setSSLClientCert");
-        wsclient.method<&WSClient::set_server_cert>    ("setSSLServerCert");
-        wsclient.method<&WSClient::set_ssl_passphrase> ("setSSLPassphrase");
+        wsclient.method<&WSClient::set_client_cert>         ("setSSLClientCert");
+        wsclient.method<&WSClient::set_server_cert>         ("setSSLServerCert");
+        wsclient.method<&WSClient::set_ssl_passphrase>      ("setSSLPassphrase");
 
         //Use HTTP Auth
-        wsclient.method<&WSClient::set_http_auth_username> ("setHTTPUsername");
-        wsclient.method<&WSClient::set_http_auth_password> ("setHTTPPassword");
-        wsclient.method<&WSClient::set_http_auth_type>     ("setHTTPAuth");
+        wsclient.method<&WSClient::set_http_auth_username>  ("setHTTPUsername");
+        wsclient.method<&WSClient::set_http_auth_password>  ("setHTTPPassword");
+        wsclient.method<&WSClient::set_http_auth_type>      ("setHTTPAuth");
 
         //Reliable
-        wsclient.method<&WSClient::set_ws_reliable> 	   ("setReliable");
-        wsclient.method<&WSClient::set_soap_version>       ("setSoapVersion");
+        wsclient.method<&WSClient::set_ws_reliable> 	    ("setReliable");
+        wsclient.method<&WSClient::set_soap_version>        ("setSoapVersion");
 
         //Timeout
-        wsclient.method<&WSClient::set_timeout>            ("setTimeout");
+        wsclient.method<&WSClient::set_timeout>             ("setTimeout");
 
         /**
          * Setter for WSClient
@@ -101,8 +102,18 @@ extern "C" {
        wsmessage.method<&WSMessage::set_rest_content_type>          ("setRestContentType");
        wsmessage.method<&WSMessage::get_headers<Php::Value>>		("getHeaders");
 
-       wsmessage.method<&WSMessage::get_debug>   ("getDebug");
-       wsmessage.method<&WSMessage::getResponse> ("getResponse");
+       wsmessage.method<&WSMessage::get_payload>                    ("getPayload");
+       wsmessage.method<&WSMessage::get_from>                       ("getFrom");
+       wsmessage.method<&WSMessage::get_endpoint>                   ("getEndpoint");
+       wsmessage.method<&WSMessage::get_action>                     ("getAction");
+       wsmessage.method<&WSMessage::get_reply_to>                   ("getReply");
+       wsmessage.method<&WSMessage::get_fault>                      ("getFault");
+       wsmessage.method<&WSMessage::is_must_understand>             ("hasMustUnderstand");
+       wsmessage.method<&WSMessage::get_rest_content_type>          ("getRestContentType");
+       wsmessage.method<&WSMessage::get_debug>                      ("getDebug");
+       wsmessage.method<&WSMessage::getResponse>                    ("getResponse");
+
+
        //wsmessage.method("getPayload",  &WSMessage::get_payload);
        //wsmessage.method("getTo",       &WSMessage::get_to);
 
@@ -123,20 +134,20 @@ extern "C" {
 
        // WSHeader - Registering methods
        wsheader.method<&WSHeader::__construct> ("__construct");
-       wsheader.method<&WSHeader::set_ns>      ("setNs");
-       wsheader.method<&WSHeader::set_prefix>  ("setPrefix");
-       wsheader.method<&WSHeader::set_name>    ("setName");
-       wsheader.method<&WSHeader::set_data>    ("setData");
-       wsheader.method<&WSHeader::set_role>    ("setRole");
+       wsheader.method<&WSHeader::setNs>      ("setNs");
+       wsheader.method<&WSHeader::setPrefix>  ("setPrefix");
+       wsheader.method<&WSHeader::setName>    ("setName");
+       wsheader.method<&WSHeader::setData>    ("setData");
+       wsheader.method<&WSHeader::setRole>    ("setRole");
 
-       wsheader.method<&WSHeader::get_ns>      ("getNs");
-       wsheader.method<&WSHeader::get_prefix>  ("getPrefix");
-       wsheader.method<&WSHeader::get_name>    ("getName");
-       wsheader.method<&WSHeader::get_data>    ("getData");
-       wsheader.method<&WSHeader::get_role>    ("getRole");
+       wsheader.method<&WSHeader::getNs>      ("getNs");
+       wsheader.method<&WSHeader::getPrefix>  ("getPrefix");
+       wsheader.method<&WSHeader::getName>    ("getName");
+       wsheader.method<&WSHeader::getData>    ("getData");
+       wsheader.method<&WSHeader::getRole>    ("getRole");
 
-       wsheader.method<&WSHeader::is_must_understand>  ("isMustUnderstand");
-       wsheader.method<&WSHeader::set_must_understand> ("setMustUnderstand");
+       wsheader.method<&WSHeader::hasMustUnderstand>  ("hasMustUnderstand");
+       wsheader.method<&WSHeader::setMustUnderstand>  ("setMustUnderstand");
 
        //wsheader.property("ns", "", Php::Public);
 
@@ -182,6 +193,7 @@ extern "C" {
        extension.add(Php::Ini("ktwso2.log_path",        ""));
        extension.add(Php::Ini("ktwso2.log_filename",    ""));
        extension.add(Php::Ini("ktwso2.log_level",        0));
+
 
        // return the extension
        return extension;

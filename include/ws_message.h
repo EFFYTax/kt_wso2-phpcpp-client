@@ -3,9 +3,9 @@
 
 #include <phpcpp.h>
 #include <string>
+#include "axis2_message.h"
 #include "ws_const.h"
 #include "ws_header.h"
-#include "axis2_message.h"
 #include <boost/variant.hpp>
 #include <boost/any.hpp>
 #include "param.h"
@@ -77,29 +77,28 @@ public:
 
 	Php::Value set_rest_content_type(Php::Parameters &params);
 
+
+
 	/**
 	 * Php Getter
 	 */
+	Php::Value get_payload();
 	Php::Value get_from();
-
 	Php::Value get_reply_to();
-
 	Php::Value get_fault();
-
+	Php::Value get_action();
+	Php::Value get_endpoint();
 	Php::Value is_must_understand();
-
 	Php::Value get_attachements();
-
 	Php::Value get_attachement_content_type();
-
 	Php::Value get_rest_content_type();
-
 	Php::Value get_debug();
-
 	Php::Value getResponse();
 
 	template <typename T>
 	T get_headers();
+
+
 };
 
 #endif

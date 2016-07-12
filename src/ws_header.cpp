@@ -1,5 +1,4 @@
 #include "ws_header.h"
-#include "ws_common.h"
 #include <iostream>
 
 /**
@@ -11,8 +10,8 @@ WSHeader :: WSHeader
 /**
  * c++ dtor
  */
-WSHeader :: ~WSHeader(){
-};
+WSHeader :: ~WSHeader
+(){};
 
 /**
  * PHP Ctor
@@ -29,7 +28,7 @@ void WSHeader :: __construct(){};
  * @access public
  * @throw  Php::Exception
  */
-Php::Value WSHeader :: set_ns(Php::Parameters &params) {
+Php::Value WSHeader :: setNs(Php::Parameters &params) {
 
 	Php::Value self(this);
 	Php::Value p =  params[0];
@@ -39,7 +38,7 @@ Php::Value WSHeader :: set_ns(Php::Parameters &params) {
 
 	_ns = p.stringValue();
 
-	self[WSF_HEADER_NS] = _ns;
+	self["ns"] = p;
 
 	return this;
 }
@@ -52,7 +51,7 @@ Php::Value WSHeader :: set_ns(Php::Parameters &params) {
  * @access public
  * @throw  Php::Exception
  */
-Php::Value WSHeader :: set_prefix(Php::Parameters &params) {
+Php::Value WSHeader :: setPrefix(Php::Parameters &params) {
 
 	Php::Value self(this);
 	Php::Value p =  params[0];
@@ -62,7 +61,7 @@ Php::Value WSHeader :: set_prefix(Php::Parameters &params) {
 
 	_prefix = p.stringValue();
 
-	self[WSF_HEADER_PREFIX] = _prefix;
+	self["prefix"] = p;
 
 	return this;
 }
@@ -75,7 +74,7 @@ Php::Value WSHeader :: set_prefix(Php::Parameters &params) {
  * @access public
  * @throw  Php::Exception
  */
-Php::Value WSHeader :: set_name(Php::Parameters &params) {
+Php::Value WSHeader :: setName(Php::Parameters &params) {
 
 	Php::Value self(this);
 	Php::Value p =  params[0];
@@ -85,7 +84,7 @@ Php::Value WSHeader :: set_name(Php::Parameters &params) {
 
 	_name = p.stringValue();
 
-	self[WSF_HEADER_LOCALNAME] = _name;
+	self["name"] = p;
 
 	return this;
 }
@@ -98,7 +97,7 @@ Php::Value WSHeader :: set_name(Php::Parameters &params) {
  * @access public
  * @throw  Php::Exception
  */
-Php::Value WSHeader :: set_data(Php::Parameters &params) {
+Php::Value WSHeader :: setData(Php::Parameters &params) {
 
 	Php::Value self(this);
 	Php::Value p =  params[0];
@@ -109,24 +108,25 @@ Php::Value WSHeader :: set_data(Php::Parameters &params) {
 	//Ensure this is array of object<WSHeader> and hydrate vector
 	if(p.isArray())
 	{
-		std::vector<WSHeader *> v;
+		std::vector<WSHeader *> wsHeaders;
+
 		for(auto &it: p)
 		{
 			if(!it.second.isObject() && !it.second.instanceOf("KTWS\\WSHeader"))
 			{
-				throw Php::Exception("Unpected parameters in array of <WSHeader>");
+				throw Php::Exception("Unpected parameters in array of <KTWS\\WSHeader>");
 			}
+			WSHeader * wsheader = ((WSHeader *)it.second.implementation());
 
-			WSHeader *object = (WSHeader *)it.second.implementation();
-			v.push_back(object);
+			wsHeaders.push_back(wsheader);
 		}
-		_header = v;
+		_header = wsHeaders;
 	}
 	else
 	{
-		_header = p.stringValue();
+	    _header = p.stringValue();
 	}
-	self[WSF_HEADER_DATA] = p;
+	self["data"] = p;
 
 	return this;
 }
@@ -139,7 +139,7 @@ Php::Value WSHeader :: set_data(Php::Parameters &params) {
  * @access public
  * @throw  Php::Exception
  */
-Php::Value WSHeader :: set_must_understand(Php::Parameters &params) {
+Php::Value WSHeader :: setMustUnderstand(Php::Parameters &params) {
 
 	Php::Value self(this);
 	Php::Value p =  params[0];
@@ -147,9 +147,10 @@ Php::Value WSHeader :: set_must_understand(Php::Parameters &params) {
 	if(!p.isBool()) {
 		throw Php::Exception("Unexpected parameter for must understand, Must be a boolean");
 	}
+
 	_must_understand = p;
 
-	self[WSF_HEADER_MUST_UNDERSTAND] = _must_understand;
+	self["mustUnderstand"] = p;
 
 	return this;
 }
@@ -162,7 +163,7 @@ Php::Value WSHeader :: set_must_understand(Php::Parameters &params) {
  * @access public
  * @throw  Php::Exception
  */
-Php::Value WSHeader :: set_role(Php::Parameters &params) {
+Php::Value WSHeader :: setRole(Php::Parameters &params) {
 
 	Php::Value self(this);
 	Php::Value p =  params[0];
@@ -170,9 +171,15 @@ Php::Value WSHeader :: set_role(Php::Parameters &params) {
 	if(!p.isNumeric()) {
 		throw Php::Exception("Unexpected parameter for role, Must be numeric");
 	}
-	_role = p;
 
-	self[WSF_HEADER_ROLE] = p;
+	int role = p.numericValue();
+
+	if(role != 1 && role != 0 && role != 3) {
+	    throw Php::Exception("Unexpected parameter for role - must be 0 or 1 or 3");
+	}
+	_role = role;
+
+	self["role"] = role;
 
 	return this;
 }
@@ -180,17 +187,18 @@ Php::Value WSHeader :: set_role(Php::Parameters &params) {
 /**
  * Getter Php WSHeader
  */
-Php::Value WSHeader :: get_ns()     		{ return _ns; };
-Php::Value WSHeader :: get_prefix() 		{ return _prefix; };
-Php::Value WSHeader :: get_name()   		{ return _name; };
-Php::Value WSHeader :: is_must_understand() { return _must_understand;};
-Php::Value WSHeader :: get_role()   		{ return _role; };
+Php::Value WSHeader :: getNs()     		    { return _ns; };
+Php::Value WSHeader :: getPrefix() 		    { return _prefix; };
+Php::Value WSHeader :: getName()   		    { return _name; };
+Php::Value WSHeader :: hasMustUnderstand()  { return _must_understand; };
+Php::Value WSHeader :: getRole()   		    { return _role; };
+
 
 /**
  * Get Data array<WSClient> || <string>
  *
  */
-Php::Value WSHeader :: get_data() {
+Php::Value WSHeader :: getData() {
 
 	if(_header.which() == 0)
 	{
@@ -205,44 +213,22 @@ Php::Value WSHeader :: get_data() {
 	}
 	else if(_header.which() == 1)
 	{
-		return boost::get<std::vector<WSHeader *>>(_header);
+	    std::vector<WSHeader *> aWSHeader =  boost::get<std::vector<WSHeader *>>(_header);
+
+		return aWSHeader;
 	}
 	else
 	{
-		return "empty!catch";
+		return "";
 	}
 };
-
-/**
- *
- */
-template <typename T>
-T WSHeader :: get_headers(){};
-
-/**
- *
- */
-template <>
-std::vector<WSHeader *> WSHeader :: get_headers()
-{
-	return boost::get<std::vector<WSHeader *>>(_header);
-}
-
-/**
- *
- */
-template <>
-std::string WSHeader :: get_headers()
-{
-	return boost::get<std::string>(_header);
-}
 
 /**
  * has Namesapce
  */
 bool WSHeader :: hasNamespace()
 {
-	return _ns.empty() ? false : true ;
+    return _ns.empty() ? false : true ;
 }
 
 /**
@@ -250,7 +236,7 @@ bool WSHeader :: hasNamespace()
  */
 bool WSHeader :: hasPrefix()
 {
-	return _prefix.empty() ? false : true ;
+    return _prefix.empty() ? false : true ;
 }
 
 /**
@@ -258,7 +244,7 @@ bool WSHeader :: hasPrefix()
  */
 bool WSHeader :: hasName()
 {
-	return _name.empty() ? false : true ;
+    return _name.empty() ? false : true ;
 }
 
 /**
@@ -266,20 +252,76 @@ bool WSHeader :: hasName()
  */
 bool WSHeader :: hasHeaderObjects()
 {
-	if( _header.which() == 1 )
-	{
-		std::vector<WSHeader *> v = boost::get<std::vector<WSHeader *>>(_header);
-		if(v.size() > 0)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return false;
-	}
+    if( _header.which() == 1 )
+    {
+        std::vector<WSHeader *> v = boost::get<std::vector<WSHeader *>>(_header);
+        if(v.size() > 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
 }
+
+bool WSHeader :: hasRole()
+{
+    return _role == -1 ? false : true;
+}
+
+/*
+ * Get the role attribute by SoapVersion
+ */
+std::string WSHeader :: getRoleAttributeBySoapVersion(int v)
+{
+    //AXIOM_SOAP12 = 2
+    //AXIOM_SOAP11 = 1
+    if(!v)
+        throw std::invalid_argument("need the soap version");
+
+    return v == 1 ? "actor" : "role";
+}
+
+/*
+ * Get the Role namespace from internal parameter
+ */
+std::string WSHeader :: getRoleNamespace() {
+
+    map<int, string> map = map_list_of
+           (0, "http://www.w3.org/2003/05/soap-envelope/role/next")
+           (1, "http://www.w3.org/2003/05/soap-envelope/role/none")
+           (3, "http://www.w3.org/2003/05/soap-envelope/role/next");
+
+    return map[_role];
+}
+
+/**
+ * Get Headers specialisation
+ */
+template <typename T>
+T WSHeader :: getHeaders(){};
+
+/**
+ *
+ */
+template <>
+std::vector<WSHeader *> WSHeader :: getHeaders()
+{
+    return  boost::get<std::vector<WSHeader *>>(_header);
+}
+
+/**
+ *
+ */
+template <>
+std::string WSHeader :: getHeaders()
+{
+    return boost::get<std::string>(_header);
+}
+

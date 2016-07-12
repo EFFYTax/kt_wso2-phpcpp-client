@@ -52,38 +52,82 @@ void Axis2Client :: create()
 };
 
 /**
- * Proxy to the axis2 client options
- *
- * 	@access protected
- * 	@return axis2_options_t *
- */
-axis2_options_t * Axis2Client :: get_options()
-{
-	return  _client_options.get();
-};
-
-/**
- * Get the soap version URI
+ * Gets SOAP version URI.
  *
  * Proxy to the axis2 get soap version uri
  *
  * @access protected
  * @return char *
  */
-axis2_char_t * Axis2Client :: get_soap_version_uri()
+std::vector<char> Axis2Client :: getSoapVersionURI()
 {
-	return (axis2_char_t*)axis2_options_get_soap_version_uri(_client_options.get(), env.get());
+    const axis2_char_t * p_soap_version = axis2_options_get_soap_version_uri(_client_options.get(), env.get());
+
+    std::string soap_version(p_soap_version);
+
+    std::vector<char> buffer(soap_version.data(), soap_version.data() + soap_version.size() + 1u);
+
+	return buffer;
 }
 
 /**
- * Get the soap version
+ * Gets the configuration of the engine.
+ */
+axis2_conf_t * Axis2Client :: getEngineConfiguration()
+{
+    axis2_svc_ctx_t  *svc_ctx   = nullptr;
+    axis2_conf_ctx_t *conf_ctx  = nullptr;
+    axis2_conf_t     *conf      = nullptr;
+
+    if(!env.get() || !_svc_client.get())
+        throw std::invalid_argument("env or svc_client is not available");
+
+    svc_ctx = axis2_svc_client_get_svc_ctx(_svc_client.get(), env.get());
+
+    if(!svc_ctx)
+        throw std::invalid_argument("svc_ctx is not available");
+
+    conf_ctx = axis2_svc_ctx_get_conf_ctx(svc_ctx, env.get());
+
+    if(!conf_ctx)
+        throw std::invalid_argument("conf_ctx is not available");
+
+    conf = axis2_conf_ctx_get_conf(conf_ctx, env.get());
+
+    if(!conf)
+        throw std::invalid_argument("conf_ctx is not available");
+
+    return conf;
+}
+
+/**
+ * Adds a parameter to configuration.
  *
- * Proxy to axis2 get soap version
+ * @param axutil_param_t, the param to be added to client engine
+ * @return int, the status
+ */
+int Axis2Client :: addEngineParam(axutil_param_t * param)
+{
+    int status          = 0;
+    axis2_conf_t * conf = nullptr;
+
+    conf = getEngineConfiguration();
+
+    if(!conf)
+        throw std::invalid_argument("conf is not working");
+
+    status = axis2_conf_add_param(conf, env.get(), param);
+
+    return status;
+}
+
+/**
+ * Get the soap version.
  *
  * @access protected
  * @return integer
  */
-int Axis2Client :: get_soap_version()
+int Axis2Client :: getSoapVersion()
 {
 	return axis2_options_get_soap_version(_client_options.get(), env.get());
 }
@@ -92,60 +136,18 @@ int Axis2Client :: get_soap_version()
  * Get Axiom Node from XML string
  *
  * @access protected
- * @return axiom_node_t *
- */ //get_node_by_xmlstr
-std::unique_ptr<axiom_node_t, std::function<void(axiom_node_t *)>> Axis2Client :: getAxiomRootElementByXMLString(string str_payload)
+ *
+ * @return ptr to axiom_node_t
+ */
+axiom_node_t * Axis2Client :: getAxiomByXMLString(string str_payload)
 {
-    std::unique_ptr<axiom_xml_reader_t, std::function<void(axiom_xml_reader *)>> reader {nullptr,
-        [&](axiom_xml_reader_t *p){ /* Handled by axiom_stax_builder_free_self() */ }
-    };
-
-    //Builder, Lambda free stax builder and associated document only
-    std::unique_ptr<axiom_stax_builder_t, std::function<void(axiom_stax_builder_t *)>> builder {nullptr,
-        [&](axiom_stax_builder_t *p){ axiom_stax_builder_free_self (p, env.get()); }
-    };
-
-    std::unique_ptr<axiom_document_t, std::function<void(axiom_document_t *)>> document {nullptr,
-        [&](axiom_document_t *p ){ /* Handled by axiom_stax_builder_free_self */ }
-    };
-
-    std::unique_ptr<axiom_node_t, std::function<void(axiom_node_t *)>> ax_payload{nullptr,
-        [&](axiom_node_t *p ){ /* Free'd by axutil_allocator_free_impl */ }
-    };
+    axiom_node_t * axion_node;
 
     std::vector<char> ptr_payload(str_payload.data(), str_payload.data() + str_payload.size() + 1u);
 
-    //Init the reader
-    reader.reset(axiom_xml_reader_create_for_memory(env.get(),
-            ptr_payload.data(), str_payload.size(),
-            AXIS2_UTF_8, AXIS2_XML_PARSER_TYPE_BUFFER));
+    axion_node = axiom_node_create_from_buffer(env.get(), ptr_payload.data());
 
-    if (!reader) {
-        log("Axiom xml reader failed", __FILE__, __LINE__);
-        throw std::invalid_argument("Axiom xml reader failed");
-    }
-    //Init axiom builder
-    builder.reset(axiom_stax_builder_create(env.get(), reader.get()));
-
-    if (!builder) {
-        log("Axiom statx builder failed", __FILE__, __LINE__);
-        throw std::invalid_argument("Axiom statx builder failed");
-    }
-    document.reset(axiom_stax_builder_get_document(builder.get(), env.get()));
-
-    if (!document) {
-        log("Axiom statx document failed", __FILE__, __LINE__);
-        throw std::invalid_argument("Axiom statx document failed");
-    }
-    ax_payload.reset(axiom_document_get_root_element(document.get(), env.get()));
-
-    if (!ax_payload) {
-        log("Axiom get root document failed", __FILE__, __LINE__);
-        throw std::invalid_argument("Axiom get root document failed");
-    }
-    axiom_document_build_all(document.get(), env.get());
-
-    return ax_payload;
+    return axion_node;
 }
 
 /**
@@ -155,20 +157,15 @@ std::unique_ptr<axiom_node_t, std::function<void(axiom_node_t *)>> Axis2Client :
  */
 void Axis2Client :: setAttachmentCaching()
 {
-	//enable_attachment_caching ( global )
 	bool caching = false;
 	if (_svc_client.get() && caching)
 	{
-		axis2_svc_ctx_t  *svc_ctx 	= nullptr;
-		axis2_conf_ctx_t *conf_ctx 	= nullptr;
 		axutil_param_t   *cache_dir = nullptr;
 		axis2_conf_t     *conf      = nullptr;
 
-		svc_ctx   = axis2_svc_client_get_svc_ctx(_svc_client.get(), env.get());
-		conf_ctx  = axis2_svc_ctx_get_conf_ctx(svc_ctx, env.get());
-		conf 	  = axis2_conf_ctx_get_conf(conf_ctx, env.get());
+		conf = getEngineConfiguration();
 		//cache_dir = axutil_param_create(env, AXIS2_ATTACHMENT_DIR,axutil_strdup(env, "attachment_cache_dir"));
-		//axis2_conf_add_param(conf, env, cache_dir);
+		//addEngineParam(cache_dir);
 	}
 };
 
@@ -186,8 +183,7 @@ void Axis2Client :: setAttachmentCaching()
 void Axis2Client :: registerModuleOpts(const string mod_name, const string mod_param, const string mod_value)
 {
     ModuleType            mod;
-    axis2_conf_ctx_t    * conf_ctx       = nullptr;
-    axis2_svc_ctx_t     * svc_ctx        = nullptr;
+
     axis2_module_desc_t * module_desc    = nullptr;
     axis2_conf_t        * conf           = nullptr;
     axutil_qname_t      * module_qname   = nullptr;
@@ -203,11 +199,12 @@ void Axis2Client :: registerModuleOpts(const string mod_name, const string mod_p
     std::copy(mod_value.c_str(),  mod_value.c_str() +  mod_value.length()  + 1,  mod.value.begin());
 
     //Axis2/c Module configuration
-    module_qname = axutil_qname_create          (env.get(), mod.module.data(), nullptr, nullptr);
-    svc_ctx      = axis2_svc_client_get_svc_ctx (_svc_client.get(), env.get());
-    conf_ctx     = axis2_svc_ctx_get_conf_ctx   (svc_ctx, env.get());
-    conf         = axis2_conf_ctx_get_conf      (conf_ctx, env.get());
-    module_desc  = axis2_conf_get_module        (conf, env.get(), module_qname);
+    module_qname = axutil_qname_create(env.get(),
+            mod.module.data(), nullptr, nullptr);
+
+    conf = getEngineConfiguration();
+    module_desc  = axis2_conf_get_module(conf,
+            env.get(), module_qname);
 
     if (!module_desc)
     {
@@ -294,7 +291,8 @@ void Axis2Client :: setSSLAuthentication()
 	if(!sslConf.ssl_server_key_filename.empty())
 	{
 	    sslConf.ssl_server_key_prop.reset(axutil_property_create_with_args(
-			env.get(), 0, 1, 0, axutil_strdup(env.get(), sslConf.ssl_server_key_filename.c_str())
+			env.get(), 0, 1, 0, axutil_strdup(env.get(),
+			        sslConf.ssl_server_key_filename.c_str())
 		));
 		log((boost::format("Setting SSL server certficate ::  %1%") % sslConf.ssl_server_key_filename.c_str()).str(), __FILE__,__LINE__);
 	}
@@ -302,7 +300,8 @@ void Axis2Client :: setSSLAuthentication()
 	if(!sslConf.ssl_client_key_filename.empty())
 	{
 	    sslConf.ssl_client_key_prop.reset(axutil_property_create_with_args (
-			env.get(), 0, 1, 0, axutil_strdup (env.get(), sslConf.ssl_client_key_filename.c_str())
+			env.get(), 0, 1, 0, axutil_strdup (env.get(),
+			        sslConf.ssl_client_key_filename.c_str())
 		));
 		log((boost::format("Setting SSL client certficate ::  %1%") % sslConf.ssl_client_key_filename.c_str()).str(), __FILE__,__LINE__);
 	}
@@ -310,14 +309,18 @@ void Axis2Client :: setSSLAuthentication()
 	if(!sslConf.ssl_passphrase.empty())
 	{
 	    sslConf.passphrase_prop.reset(axutil_property_create_with_args (
-			env.get(), 0, 1, 0, axutil_strdup (env.get(), sslConf.ssl_passphrase.c_str())
+			env.get(), 0, 1, 0, axutil_strdup (env.get(),
+			        sslConf.ssl_passphrase.c_str())
 		));
 		log("passphrase found", __FILE__,__LINE__);
 	}
 
-	axis2_options_set_property (_client_options.get(), env.get(), "SERVER_CERT", 	 sslConf.ssl_server_key_prop.get());
-	axis2_options_set_property (_client_options.get(), env.get(), "KEY_FILE",    	 sslConf.ssl_client_key_prop.get());
-	axis2_options_set_property (_client_options.get(), env.get(), "SSL_PASSPHRASE",   sslConf.passphrase_prop.get());
+	axis2_options_set_property (_client_options.get(),
+	        env.get(), "SERVER_CERT", 	 sslConf.ssl_server_key_prop.get());
+	axis2_options_set_property (_client_options.get(),
+	        env.get(), "KEY_FILE",    	 sslConf.ssl_client_key_prop.get());
+	axis2_options_set_property (_client_options.get(),
+	        env.get(), "SSL_PASSPHRASE",  sslConf.passphrase_prop.get());
 };
 
 /**
@@ -357,7 +360,8 @@ void Axis2Client :: setSoapVersion()
     // set soap version
 	if(tansportOpts.use_soap)
 	{
-		axis2_options_set_soap_version(_client_options.get(), env.get(), [this]()->int { return tansportOpts.soap_version == 1.1 ? 1 : 2; }());
+		axis2_options_set_soap_version(_client_options.get(), env.get(),
+		        [this]()->int { return tansportOpts.soap_version == 1.1 ? 1 : 2; }());
 
 		log((boost::format("useSOAP TRUE setting soap version %1%") % tansportOpts.soap_version).str(), __FILE__,__LINE__);
 	}
@@ -392,49 +396,64 @@ void Axis2Client :: setHttpTransport()
 	}
 };
 
+/*
+ * Set transport URL
+ */
+void Axis2Client :: setTransportUrl() {
+    //Transport URL
+    if(!tansportOpts.transport_url.empty())
+    {
+        std::vector<char> char_transport_url(tansportOpts.transport_url.data(),
+                tansportOpts.transport_url.data() + tansportOpts.transport_url.size() + 1u);
+
+        axutil_property_t * transport_url = axutil_property_create_with_args(env.get(),
+                0,0,0, char_transport_url.data()
+        );
+
+        axis2_options_set_property(_client_options.get(), env.get(), AXIS2_TRANSPORT_URL, transport_url);
+
+        log((boost::format("Setting WS Transport URL :: %1%") % tansportOpts.transport_url.c_str()).str(), __FILE__,__LINE__);
+    }
+}
+
+
+/*
+ * Creates endpoint reference struct.
+ *
+ * @private
+ */
+void Axis2Client :: createEndpointRef() {
+
+    axis2_endpoint_ref_t *p_to_epr = nullptr;
+
+    if(_wsmessage->hasEndpoint())
+    {
+        if(_wsmessage->getEndpoint()->is_string())
+        {
+            p_to_epr = axis2_endpoint_ref_create(env.get(),
+                _wsmessage->getEndpoint()->get<const char *>());
+        }
+        else
+        {
+            //This will set endpoint w/ params and metas
+            p_to_epr = add_endpoint_values_ref(
+                _wsmessage->getEndpoint()->get<map<string,vector<string>>>());
+        }
+    }
+    else
+    {
+        throw std::invalid_argument("missing endpoint");
+    }
+
+    axis2_options_set_to (_client_options.get(), env.get(), p_to_epr);
+}
+
 /**
  * Register endpoint and soap action
  */
 void Axis2Client :: setEndpointAndSoapAction()
 {
-	axis2_endpoint_ref_t *to_epr = nullptr;
-
-	//We must have an endpoint
-	if(_wsmessage->hasEndpoint())
-	{
-		//The endpoint can be a string
-		if(_wsmessage->getEndpoint()->is_string())
-		{
-			to_epr = axis2_endpoint_ref_create (
-				env.get(), _wsmessage->getEndpoint()->get<const char *>()
-			);
-		}
-		else
-		{
-			//This will set endpoint w/ params and metas
-			to_epr = add_endpoint_values_ref(
-				_wsmessage->getEndpoint()->get<map<string,vector<string>>>()
-			);
-		}
-	}
-	else
-		throw std::invalid_argument("missing endpoint");
-
-	axis2_options_set_to (_client_options.get(), env.get(), to_epr);
-
-	//Transport URL
-	if(!tansportOpts.transport_url.empty())
-	{
-	    std::vector<char> char_transport_url(tansportOpts.transport_url.data(), tansportOpts.transport_url.data() + tansportOpts.transport_url.size() + 1u);
-
-		axutil_property_t * transport_url = axutil_property_create_with_args(
-			env.get(),0,0,0, char_transport_url.data()
-		);
-
-		axis2_options_set_property(_client_options.get(), env.get(), AXIS2_TRANSPORT_URL, transport_url);
-
-		log((boost::format("Setting WS Transport URL :: %1%") % tansportOpts.transport_url.c_str()).str(), __FILE__,__LINE__);
-	}
+    createEndpointRef();
 
 	//if client_options
 	if(_wsmessage->hasAction())
@@ -452,6 +471,8 @@ void Axis2Client :: setEndpointAndSoapAction()
 
 /**
  * Set WS-Addressing options
+ *
+ * TODO: To be refactored
  */
 void Axis2Client :: setWSAOpts() {
 
@@ -558,12 +579,12 @@ void Axis2Client :: setTimeout()
 }
 
 /**
- * Registering headers
+ * Registering headers to axis2 client
+ *
  */
 bool Axis2Client :: setSoapHeaders()
 {
-	axis2_char_t *soap_version_uri = get_soap_version_uri();
-	int           soap_version     = get_soap_version();
+	std::vector<char> soap_version_uri = getSoapVersionURI();
 
 	if(_wsmessage->hasHeaders())
 	{
@@ -572,24 +593,29 @@ bool Axis2Client :: setSoapHeaders()
 		axiom_node_t *header_node = nullptr;
 
 		//Index will be use to calculate the ns:
-		for(auto &wsheader: _wsmessage->get_headers<std::vector<WSHeader *>>())
+		for(auto &a2Header: _wsmessage->get_headers<std::vector<WSHeader *>>())
 		{
-			axiom_node_t * header_node = create_header_node( wsheader, nullptr, soap_version_uri, soap_version );
-			_ns_index++;
+			header_node = createNodeHeader( a2Header, nullptr, soap_version_uri.data());
 
-			//DEBUG
+			//Add the header to the axis2
 			if (header_node)
-			{
-				axis2_char_t *om_str_out = nullptr;
+            {
+			    axis2_char_t *om_str_out = nullptr;
 
-				om_str_out = axiom_node_to_string (header_node, env.get());
+			    axis2_svc_client_add_header (_svc_client.get(), env.get(), header_node);
 
-				AXIS2_LOG_DEBUG (env.get()->log, AXIS2_LOG_SI,
-				WSF_PHP_LOG_PREFIX "HEADER_NODES ::::::::: \n\t %s \n", om_str_out);
+			    log("Adding header block to svc_client", __FILE__,__LINE__);
 
-				AXIS2_FREE(env.get()->allocator, om_str_out);
-				om_str_out = NULL;
-			}
+			    //DEBUG
+			    if(1)
+			    {
+                    om_str_out = axiom_node_to_string (header_node, env.get());
+
+                    log("header added to axis2 :: " + std::string(om_str_out), __FILE__,__LINE__);
+
+                    env.get()->allocator->free_fn(env.get()->allocator, om_str_out);
+			    }
+            }
 		}
 	}
 
@@ -598,8 +624,10 @@ bool Axis2Client :: setSoapHeaders()
 
 /**
  * Create Header node
+ *
+ * Method must be private. Handling the creation of a axiom node header.
  */
-axiom_node_t * Axis2Client :: create_header_node(WSHeader *wsheader, axiom_node_t *parent, axis2_char_t *soap_uri, int soap_version )
+axiom_node_t * Axis2Client :: createNodeHeader(WSHeader * wsHeader, axiom_node_t *parent, axis2_char_t *soap_uri)
 {
 	axiom_node_t      * header_node 	= nullptr;
 	axiom_namespace_t * header_ns		= nullptr;
@@ -607,78 +635,72 @@ axiom_node_t * Axis2Client :: create_header_node(WSHeader *wsheader, axiom_node_
 	axiom_namespace_t * soap_ns			= nullptr;
 	axiom_attribute_t * role_attr       = nullptr;
 
-	if(wsheader->hasNamespace() && wsheader->hasPrefix())
+	//Create the namespace if header has it
+	if(wsHeader->hasNamespace())
 	{
-		header_ns = axiom_namespace_create (
-			env.get(),
-			wsheader->_ns.c_str(),
-			wsheader->_prefix.c_str()
-		);
-	}
-	else if(wsheader->hasNamespace())
-	{
-		std::string prefix = "ns" + std::to_string(_ns_index);
+	    std::string prefix = wsHeader->hasPrefix()
+	            ? wsHeader->_prefix
+	            : "ns" + std::to_string(_ns_index);
 
-		header_ns = axiom_namespace_create (
-			env.get(),
-			wsheader->_ns.c_str(),
-			prefix.c_str()
-		);
+	    //increment namespace if no prefix
+        if(!wsHeader->hasPrefix())
+        {
+            _ns_index++;
+        }
+
+	    header_ns = axiom_namespace_create (env.get(),
+		        wsHeader->_ns.c_str(), prefix.c_str());
 	}
 
-	header_element = axiom_element_create (
-		env.get(), parent , wsheader->_name.c_str(), header_ns, &header_node
-	);
+	//Create Axiom node header element
+	header_element = axiom_element_create (env.get(),
+	        parent , wsHeader->_name.c_str(), header_ns, &header_node);
 
-	if(wsheader->_must_understand)
+	//Set the header to be use must understand
+	if(wsHeader->_must_understand)
 	{
-		log("must understand value is set", __FILE__,__LINE__);
-
-		string must_understand = to_string(wsheader->_must_understand);
-
-		soap_ns = axiom_namespace_create (env.get(), soap_uri, "soapenv");
+		string must_understand = to_string(wsHeader->_must_understand);
+		soap_ns                 = axiom_namespace_create (env.get(), soap_uri, "soapenv");
 
 		axiom_attribute_t *mu_attr = axiom_attribute_create (
-			env.get(), AXIOM_SOAP_ATTR_MUST_UNDERSTAND, must_understand.c_str(), soap_ns
+			env.get(), "mustUnderstand", must_understand.c_str(), soap_ns
 		);
 
-		axiom_element_add_attribute (header_element, env.get(), mu_attr, header_node);
+		axiom_element_add_attribute (header_element,
+		        env.get(), mu_attr, header_node);
+
+		log("must understand value is set", __FILE__,__LINE__);
 	}
 
-	//TODO: -> Move to Header Object as getter
-	auto role = [] (int role)->string {
-		map<int, string> map = map_list_of
-		(0, "http://www.w3.org/2003/05/soap-envelope/role/next")
-		(1, "http://www.w3.org/2003/05/soap-envelope/role/none")
-		(3, "http://www.w3.org/2003/05/soap-envelope/role/next");
-		return map[role]; };
-
-	string roleval = role(wsheader->_role);
-
+	//Add the namespace if defined
 	if(!soap_ns)
-		soap_ns = axiom_namespace_create (env.get(), soap_uri, AXIOM_SOAP_DEFAULT_NAMESPACE_PREFIX);
-
-	if (soap_version == AXIOM_SOAP12 )//&& roleval)
 	{
-		role_attr = axiom_attribute_create (env.get(), WSF_HEADER_ROLE, roleval.c_str(), soap_ns);
-	    axiom_element_add_attribute (header_element, env.get(), role_attr, header_node);
-	}
-	else if (soap_version == AXIOM_SOAP11 )// && roleval)
-	{
-		role_attr = axiom_attribute_create (env.get(), WSF_HEADER_ACTOR, roleval.c_str(), soap_ns);
-		axiom_element_add_attribute (header_element, env.get(), role_attr, header_node);
+		soap_ns = axiom_namespace_create (env.get(), soap_uri, "soapenv");
 	}
 
-	// Header Object
-	if(wsheader->hasHeaderObjects())
+	//Do we have a role defined in this header ?
+	if(wsHeader->hasRole())
 	{
-		for(auto &it: wsheader->get_headers<vector<WSHeader *>>())
+	    string roleval      = wsHeader->getRoleNamespace();
+	    int    soap_version = getSoapVersion();
+
+	    role_attr = axiom_attribute_create (env.get(),
+	            wsHeader->getRoleAttributeBySoapVersion(soap_version).c_str(), roleval.c_str(), soap_ns);
+
+	    axiom_element_add_attribute (header_element,
+	            env.get(), role_attr, header_node);
+	}
+
+	//nested headers
+	if(wsHeader->hasHeaderObjects())
+	{
+		for(auto &wsheader: wsHeader->getHeaders<vector<WSHeader *>>())
 		{
-			_ns_index++;
-			create_header_node(it, header_node, soap_uri, soap_version);
+		    createNodeHeader(wsheader, header_node, soap_uri);
 		}
 	}
-	//Text or xml
+
+	//We are processing text from data or xml file
 	else
 	{
 		ptree pt;
@@ -686,18 +708,20 @@ axiom_node_t * Axis2Client :: create_header_node(WSHeader *wsheader, axiom_node_
 		    [&](axiom_node_t * p)->void { if(p) std::free(p); }};
 		try
 		{
-			stringstream xml; xml << wsheader->get_headers<string>();
+			stringstream xml; xml << wsHeader->getHeaders<string>();
 
 			read_xml(xml, pt);
-			node = getAxiomRootElementByXMLString(wsheader->get_headers<string>());
+			node.reset(getAxiomByXMLString(wsHeader->getHeaders<string>()));
 
 			if(node)
+			{
 				axiom_node_add_child(header_node, env.get(), node.get());
+			}
 		}
 		catch (...)
 		{
 			axiom_element_set_text(
-				header_element, env.get(), wsheader->get_headers<string>().c_str(), header_node
+				header_element, env.get(), wsHeader->getHeaders<string>().c_str(), header_node
 			);
 		}
 	}
@@ -706,7 +730,9 @@ axiom_node_t * Axis2Client :: create_header_node(WSHeader *wsheader, axiom_node_
 }
 
 /**
- * Register security via WSSecToken and WSPolicy
+ * Register security via WSSecToken and WSPolicy.
+ *
+ * The policy can be suited from a raw xml or build from the KTWS\WSPolicy object
  *
  * @access protected
  *
@@ -718,9 +744,6 @@ void Axis2Client :: setWSSecurityOpts()
 	     [&](axiom_node_t * p)->void { if(p) std::free(p); }
 	};
 
-	axis2_svc_ctx_t 		*svc_ctx 		= nullptr;
-	axis2_conf_ctx_t 		*conf_ctx 		= nullptr;
-	axis2_conf_t 			*conf			= nullptr;
 	axutil_param_t 			*security_param = nullptr;
 	axiom_element_t 		*root_ele 		= nullptr;
 	axis2_desc_t 			*desc 			= nullptr;
@@ -728,15 +751,19 @@ void Axis2Client :: setWSSecurityOpts()
 	axis2_svc_t 			*svc 			= nullptr;
 	neethi_policy_t 		*neethi_policy 	= nullptr;
 
+	//If KTWS\WSSecurityToken is not set we don't continue
 	if(!_wssectoken)
-		return ;
+	{
+	    return ;
+	}
 
 	if(_wspolicy)
 	{
 		if(_wspolicy->hasXMLPolicy())
 		{
-			log("POLICY :: XML found", __FILE__,__LINE__);
-			policy_node = getAxiomRootElementByXMLString(_wspolicy->_policy);
+		    policy_node.reset(getAxiomByXMLString(_wspolicy->_policy));
+
+			log("policy :: xml found", __FILE__,__LINE__);
 		}
 		else
 		{
@@ -749,18 +776,21 @@ void Axis2Client :: setWSSecurityOpts()
 	setRampartOptions();
 
 	if(rampart_context_get_custom_tokens(rampartOpts.rampart_ctx.get(), env.get()) && _wspolicy == NULL)
-		return ;
-
-
-	if(!_wspolicy &&  rampart_context_get_custom_tokens(rampartOpts.rampart_ctx.get(), env.get()) != NULL)
 	{
-		neethi_options_t *neethi_options = neethi_options_create (env.get());
+		return ;
+	}
+
+	if(!_wspolicy && rampart_context_get_custom_tokens(rampartOpts.rampart_ctx.get(), env.get()) != NULL)
+	{
+		neethi_options_t *neethi_options = nullptr;
+
+		neethi_options_create (env.get());
 		policy_node.reset(neethi_options_get_root_node (neethi_options, env.get()));
 	}
 
 	if(policy_node)
 	{
-		if(axiom_node_get_node_type (policy_node.get(), env.get()) == AXIOM_ELEMENT)
+		if(axiom_node_get_node_type (policy_node.get(), env.get()) == 2) //2 => AXIOM_ELEMENT
 		{
 			root_ele = (axiom_element_t *)axiom_node_get_data_element (policy_node.get(), env.get());
 
@@ -788,16 +818,12 @@ void Axis2Client :: setWSSecurityOpts()
 				}
 				axis2_policy_include_add_policy_element (policy_include, env.get(), AXIS2_SERVICE_POLICY, neethi_policy);
 
-				svc_ctx  		= axis2_svc_client_get_svc_ctx (_svc_client.get(), env.get());
-				conf_ctx 	    = axis2_svc_ctx_get_conf_ctx   (svc_ctx, env.get());
-				conf 	 		= axis2_conf_ctx_get_conf      (conf_ctx, env.get());
-
 				//Copy to buffer for C compat
 				std::string param_name          = "RampartConfiguration";
 				std::vector<char> buffer_param(param_name.data(), param_name.data() + param_name.size() + 1u);
 				security_param                  = axutil_param_create(env.get(), buffer_param.data(), rampartOpts.rampart_ctx.get());
 
-				axis2_conf_add_param (conf, env.get(), security_param);
+				addEngineParam(security_param);
 			}
 		}
 	}
@@ -810,11 +836,10 @@ void Axis2Client :: setWSSecurityOpts()
 
 		om_str_out = axiom_node_to_string (policy_node.get(), env.get());
 
-		AXIS2_LOG_DEBUG (env.get()->log, AXIS2_LOG_SI,
-		WSF_PHP_LOG_PREFIX "creating rampart client outgoing policy node \n\t %s \n", om_str_out);
+		log("creating rampart client outgoing policy node :: " + std::string(om_str_out), __FILE__,__LINE__);
 
-		AXIS2_FREE(env.get()->allocator, om_str_out);
-		om_str_out = NULL;
+		//Free
+		env.get()->allocator->free_fn(env.get()->allocator, om_str_out);
 	}
 
 	return ;
@@ -842,7 +867,7 @@ axis2_endpoint_ref_t * Axis2Client :: add_endpoint_values_ref(map<string, vector
 			    std::unique_ptr<axiom_node_t, std::function<void(axiom_node_t *)>> node{nullptr,
 			        [&](axiom_node_t * p)->void {if(p) std::free(p);
 			    }};
-				node = getAxiomRootElementByXMLString(xml_str);
+				node.reset(getAxiomByXMLString(xml_str));
 
 				axis2_endpoint_ref_add_ref_param(endpoint_ref, env.get(), node.get());
 
@@ -890,7 +915,8 @@ void Axis2Client :: setRampartOptions()
 	{
 	    log("RAMPART :: Setting values to rampart context ", __FILE__,__LINE__);
 
-        rampart_context_set_ttl(rampartOpts.rampart_ctx.get(), env.get(), _wssectoken->_ttl);
+        rampart_context_set_ttl(rampartOpts.rampart_ctx.get(),
+                env.get(), _wssectoken->_ttl);
 
         //clockSkewBuffer @undocumented from api
         //rampart_context_set_clock_skew_buffer(rampart_context, env, Z_LVAL_PP(token_val));
@@ -903,7 +929,8 @@ void Axis2Client :: setRampartOptions()
             rampartOpts.username = std::vector<char>(_wssectoken->_user.data(),
                     _wssectoken->_user.data() + _wssectoken->_user.size() + 1u);
 
-            rampart_context_set_user(rampartOpts.rampart_ctx.get(), env.get(), rampartOpts.username.data());
+            rampart_context_set_user(rampartOpts.rampart_ctx.get(),
+                    env.get(), rampartOpts.username.data());
 
             log("RAMPART :: Setting username", __FILE__,__LINE__);
         }
@@ -916,9 +943,11 @@ void Axis2Client :: setRampartOptions()
             rampartOpts.certificate =  std::vector<char>(_wssectoken->_certificate.data(),
                     _wssectoken->_certificate.data() + _wssectoken->_certificate.size() + 1u);
 
-            rampart_context_set_certificate(rampartOpts.rampart_ctx.get(), env.get(), rampartOpts.certificate.data());
+            rampart_context_set_certificate(rampartOpts.rampart_ctx.get(),
+                    env.get(), rampartOpts.certificate.data());
 
-            if(rampart_context_set_certificate_type(rampartOpts.rampart_ctx.get(), env.get(), AXIS2_KEY_TYPE_PEM) == AXIS2_SUCCESS)
+            if(rampart_context_set_certificate_type(rampartOpts.rampart_ctx.get(),
+                    env.get(), AXIS2_KEY_TYPE_PEM) == AXIS2_SUCCESS)
             {
                 log("RAMPART :: Setting certificate type", __FILE__,__LINE__);
             }
@@ -932,9 +961,11 @@ void Axis2Client :: setRampartOptions()
             rampartOpts.receiver_certificate = std::vector<char>(_wssectoken->_receiver_certificate.data(),
                     _wssectoken->_receiver_certificate.data() + _wssectoken->_receiver_certificate.size() + 1u);
 
-            rampart_context_set_receiver_certificate(rampartOpts.rampart_ctx.get(), env.get(), rampartOpts.receiver_certificate.data());
+            rampart_context_set_receiver_certificate(rampartOpts.rampart_ctx.get(),
+                    env.get(), rampartOpts.receiver_certificate.data());
 
-            if(rampart_context_set_receiver_certificate_type(rampartOpts.rampart_ctx.get(), env.get(), AXIS2_KEY_TYPE_PEM) == AXIS2_SUCCESS)
+            if(rampart_context_set_receiver_certificate_type(rampartOpts.rampart_ctx.get(),
+                    env.get(), AXIS2_KEY_TYPE_PEM) == AXIS2_SUCCESS)
             {
                 log("RAMPART :: Setting receiver certificate type", __FILE__,__LINE__);
             }
@@ -948,11 +979,13 @@ void Axis2Client :: setRampartOptions()
             rampartOpts.private_key =  std::vector<char>(_wssectoken->_private_key.data(),
                     _wssectoken->_private_key.data() + _wssectoken->_private_key.size() + 1u);
 
-            rampart_context_set_prv_key(rampartOpts.rampart_ctx.get(), env.get(), rampartOpts.private_key.data());
+            rampart_context_set_prv_key(rampartOpts.rampart_ctx.get(),
+                    env.get(), rampartOpts.private_key.data());
 
             log("RAMPART :: Setting pvt key", __FILE__,__LINE__);
 
-            if(rampart_context_set_prv_key_type (rampartOpts.rampart_ctx.get(), env.get(), AXIS2_KEY_TYPE_PEM) == AXIS2_SUCCESS)
+            if(rampart_context_set_prv_key_type (rampartOpts.rampart_ctx.get(),
+                    env.get(), AXIS2_KEY_TYPE_PEM) == AXIS2_SUCCESS)
             {
                 log("RAMPART :: Setting pvt key format", __FILE__,__LINE__);
             }
@@ -966,7 +999,8 @@ void Axis2Client :: setRampartOptions()
             rampartOpts.password = std::vector<char>(_wssectoken->_password.data(),
                     _wssectoken->_password.data() + _wssectoken->_password.size() + 1u);
 
-            rampart_context_set_password(rampartOpts.rampart_ctx.get(), env.get(), rampartOpts.password.data());
+            rampart_context_set_password(rampartOpts.rampart_ctx.get(),
+                    env.get(), rampartOpts.password.data());
 
             log("RAMPART :: Setting password " + _wssectoken->_password, __FILE__,__LINE__);
         }
@@ -1096,7 +1130,7 @@ std::unique_ptr<axiom_node_t, std::function<void(axiom_node_t *)>> Axis2Client :
 /**
  * Register reliable messaging
  *
- *
+ * TODO: Not yet implemented...
  */
 void Axis2Client :: setWSReliableOpts()
 {
@@ -1188,17 +1222,11 @@ void Axis2Client :: setWSReliableOpts()
 		axutil_property_t *last_msg_prop = axutil_property_create_with_args (
 			 env.get(), 0, 0, 0, buffer_str.data()
 		);
-
 		 axis2_options_set_property (
 			_client_options.get(), env.get(), "Sandesha2LastMessage", last_msg_prop
 		 );
-
-
 		//log("Setting Sandesha2LastMessage");
 	}
-
-
-
 };
 
 /**
@@ -1211,17 +1239,18 @@ void Axis2Client :: setWSReliableOpts()
 bool Axis2Client :: hasReliable()
 {
 	return ((addressingOpts.is_addressing_engaged ||
-			(!addressingOpts.is_addressing_engaged && addressingOpts.is_addr_action_present)) && reliableOpts.engage_rm ) ? true : false;
+			(!addressingOpts.is_addressing_engaged &&
+			        addressingOpts.is_addr_action_present)) && reliableOpts.engage_rm ) ? true : false;
 };
 
 /**
  * Has Fault on the last query
  *
- *
+ * @return boolean
  */
 bool Axis2Client :: hasSoapFault()
 {
-	 return axis2_svc_client_get_last_response_has_fault(_svc_client.get(), env.get());
+     return axis2_svc_client_get_last_response_has_fault(_svc_client.get(), env.get());
 };
 
 /**
@@ -1232,19 +1261,18 @@ bool Axis2Client :: hasSoapFault()
  */
 string Axis2Client :: getSoapResponse()
 {
-    //std::unique<axiom_xml_writer_t, >
-
 	axiom_xml_writer_t * writer 	    = nullptr;
 	axiom_output_t     * om_output 		= nullptr;
 	axis2_char_t       * buffer 		= nullptr;
 
 	/*
-	 * @TODO: Please backport attachements @see MTOM
+	 * TODO:  backport attachements @see MTOM
 	 */
 	//axiom_soap_envelope_t *soapenvelope = nullptr;
 	//soapenvelope = axis2_svc_client_get_last_response_soap_envelope (_svc_client.get(), env.get());
 	//attachments_found = wsf_client_handle_incoming_attachments (env, client_ht, rmsg,
 	//                soap_envelope, response_payload TSRMLS_CC);
+
 	writer = axiom_xml_writer_create_for_memory (env.get(), nullptr, AXIS2_TRUE, 0,
 			AXIS2_XML_PARSER_TYPE_BUFFER);
 
@@ -1262,91 +1290,220 @@ string Axis2Client :: getSoapResponse()
 }
 
 /**
+ * Get the soap fault detail value
+ *
+ * @param axiom_node_t    *reason_node
+ * @param axiom_element_t *reason_element
+ *
+ * @return string
  *
  */
-string Axis2Client::get_soap_fault_detail(axiom_node_t *detail_node, axiom_element_t *detail_element)
+std::string Axis2Client::getSoapFaultDetail(axiom_node_t * detail_node, axiom_element_t * detail_element)
 {
-	axis2_char_t * detail_string 	 = nullptr;
+	axis2_char_t * detail_value 	 = "empty";
 	axiom_node_t * detail_entry_node = nullptr;
 
 	if(detail_node)
 	{
 		detail_entry_node = axiom_node_get_first_element(detail_node, env.get());
+
 		if(detail_entry_node)
 		{
-			detail_string = axiom_node_to_string(detail_entry_node, env.get());
+		    detail_value = axiom_node_to_string(detail_entry_node, env.get());
 
-			if(detail_string) { env.get()->allocator->free_fn(env.get()->allocator, detail_string); }
+			if(detail_value)
+			{
+			    env.get()->allocator->free_fn(env.get()->allocator, detail_value);
+			}
 		}
 	}
 
-	if(!detail_string) {
-	    detail_string = "n/a";
-	}
+	std::string detail(detail_value);
 
-	return detail_string;
+	return detail;
 }
 
-/**
+/*
+ * Get the fault reason independently of the soap version
  *
+ * @param axiom_node_t    *reason_node
+ * @param axiom_element_t *reason_element
+ *
+ * @return string
  */
-string Axis2Client::get_soap_fault_reason(axiom_node_t *reason_node, axiom_element_t *reason_element)
+std::string Axis2Client::getSoapFaultReason(axiom_node_t *reason_node, axiom_element_t *reason_element)
 {
-	axis2_char_t *text_value = nullptr;
+	axis2_char_t * reason_value = "empty";
 
-	if([this]()->int { return tansportOpts.soap_version == 1.1 ? 1 : 2; }() == AXIOM_SOAP12)
+	if( getSoapVersion() == AXIOM_SOAP12)
 	{
 		axiom_node_t 	* text_node 	= nullptr;
 		axiom_element_t * text_element 	= nullptr;
 
-		text_element = axiom_element_get_first_element(reason_element, env.get(), reason_node, &text_node);
+		text_element = axiom_element_get_first_element(reason_element,
+		        env.get(), reason_node, &text_node);
+
 		if(text_element)
 		{
-			text_value = axiom_element_get_text(text_element, env.get(), text_node);
+		    reason_value = axiom_element_get_text(text_element,
+			        env.get(), text_node);
 		}
 	}
-	else if([this]()->int { return tansportOpts.soap_version == 1.1 ? 1 : 2; }() == AXIOM_SOAP11)
+	else if( getSoapVersion() == AXIOM_SOAP11)
 	{
-		text_value = axiom_element_get_text(reason_element, env.get(), reason_node);
+	    reason_value = axiom_element_get_text(reason_element,
+		        env.get(), reason_node);
+
+	    //If the faultstring have some '' not escaped
+	    //@see libxml2_reader_wrapper
+	    //xmlReaderForIO(xmlEncodeSpecialChars(wrapper_impl, axis2_libxml2_reader_wrapper_read_input_callback)
+	    if(!reason_value) reason_value = "fixme-could-not-be-read-";
 	}
 
-	if(!text_value)
-	    text_value = "n/a";
+	std::string reason(reason_value);
 
-	return text_value;
+	return reason;
 }
 
 /**
+ * Get the fault reason independently of the soap version
  *
+ * @param axiom_node_t    *reason_node
+ * @param axiom_element_t *reason_element
+ *
+ * @return string
  */
-string Axis2Client::get_soap_fault_code(axiom_node_t *code_node, axiom_element_t *code_element)
+std::string Axis2Client::getSoapFaultCode(axiom_node_t *code_node, axiom_element_t *code_element)
 {
 	axiom_node_t    * code_value_node = nullptr;
 	axiom_element_t * code_value_ele  = nullptr;
-	char 			* code			  = nullptr;
+	char 			* code_value      = "empty";
 
-	if([this]()->int { return tansportOpts.soap_version == 1.1 ? 1 : 2; }() == AXIOM_SOAP12)
+	if( getSoapVersion() == AXIOM_SOAP12)
 	{
-		code_value_ele = axiom_element_get_first_element(code_element, env.get(), code_node, &code_value_node);
-		code 		   = axiom_element_get_text(code_value_ele, env.get(), code_value_node);
+		code_value_ele = axiom_element_get_first_element(code_element,
+		        env.get(), code_node, &code_value_node);
+
+		code_value = axiom_element_get_text(code_value_ele,
+		        env.get(), code_value_node);
 	}
-	else if([this]()->int { return tansportOpts.soap_version == 1.1 ? 1 : 2; }() == AXIOM_SOAP11)
+	else if(getSoapVersion() == AXIOM_SOAP11)
 	{
-		code 		   = axiom_element_get_text(code_element, env.get(), code_node);
+	    code_value = axiom_element_get_text(code_element,
+		        env.get(), code_node);
 	}
 
-	if(!code)
-	    code = "n/a";
+	std::string reason(code_value);
 
-	return code;
+	return reason;
 }
 
+/**
+ * get the Soap Fault role uri
+ *
+ * @param axiom_node_t    *reason_node
+ * @param axiom_element_t *reason_element
+ *
+ * @return string
+ */
+std::string Axis2Client::getSoapFaultRoleUri(axiom_node_t *role_node, axiom_element_t *role_element)
+{
+    axis2_char_t *role_uri = "empty";
 
+    if(role_node && role_element)
+    {
+        role_uri = axiom_element_get_text(role_element,
+                env.get(), role_node);
+    }
+
+    std::string role(role_uri);
+
+    return role_uri;
+}
 
 /**
+ * Is the current localname contain a soap fault code whatever, if we are in SOAP 1.1 or 1.2
  *
+ * @param localname as the local node element
+ *
+ * @return boolean
  */
-Axis2Client::FaultType Axis2Client::handle_soap_fault(axiom_soap_fault_t * soap_fault)
+bool Axis2Client::isFaultCodeByLocalName(char * localname) {
+
+   bool found = false;
+
+   if(std::strcmp(localname, AXIOM_SOAP12_SOAP_FAULT_CODE_LOCAL_NAME) == 0 ||
+      std::strcmp(localname, AXIOM_SOAP11_SOAP_FAULT_CODE_LOCAL_NAME) == 0)
+   {
+       found = true;
+   }
+   return found;
+}
+
+/*
+ * Is the current localname contain a soap fault reason, whatever if we are in SOAP 1.1 or 1.2
+ *
+ * @param localname as the local node element
+ *
+ * @return boolean
+ */
+bool Axis2Client::isFaultReasonByLocalName(char * localname) {
+
+    bool found = false;
+
+    if (std::strcmp(localname, AXIOM_SOAP12_SOAP_FAULT_REASON_LOCAL_NAME) == 0 ||
+        std::strcmp(localname, AXIOM_SOAP11_SOAP_FAULT_STRING_LOCAL_NAME) == 0)
+    {
+        found = true;
+    }
+    return found;
+}
+
+/*
+ * Is the current localname contain a soap detail, whatever if we are in SOAP 1.1 or 1.2
+ *
+ * @param localname as the local node element
+ *
+ * @return boolean
+ */
+bool Axis2Client::isFaultDetailByLocalName(char * localname) {
+
+    bool found = false;
+
+    if (std::strcmp(localname, AXIOM_SOAP12_SOAP_FAULT_DETAIL_LOCAL_NAME) == 0 ||
+        std::strcmp(localname, AXIOM_SOAP11_SOAP_FAULT_DETAIL_LOCAL_NAME) == 0)
+    {
+        found = true;
+    }
+    return found;
+}
+
+/*
+ * Is the current localname contain a soap role, whatever if we are in SOAP 1.1 or 1.2
+ *
+ * @param localname as the local node element
+ *
+ * @return boolean
+ */
+bool Axis2Client::isFaultRoleByLocalName(char * localname) {
+
+    bool found = false;
+    if (std::strcmp(localname, AXIOM_SOAP12_SOAP_FAULT_ROLE_LOCAL_NAME)  == 0 ||
+        std::strcmp(localname, AXIOM_SOAP11_SOAP_FAULT_ACTOR_LOCAL_NAME) == 0)
+    {
+        found = true;
+    }
+    return found;
+}
+
+/**
+ * Handle soap fault
+ *
+ * @param axiom_soap_fault
+ *
+ * @return FaultType struct
+ */
+Axis2Client::FaultType Axis2Client::HandleSoapFault(axiom_soap_fault_t * soap_fault)
 {
 	FaultType fault;
 
@@ -1364,7 +1521,7 @@ Axis2Client::FaultType Axis2Client::handle_soap_fault(axiom_soap_fault_t * soap_
 			axiom_element_t  				* fault_element = nullptr;
 			axiom_child_element_iterator_t  * ele_iterator 	= nullptr;
 
-			fault_element = (axiom_element_t *)axiom_node_get_data_element(fault_node, env.get());
+			fault_element = (axiom_element_t *) axiom_node_get_data_element(fault_node, env.get());
 			ele_iterator  = axiom_element_get_child_elements(fault_element, env.get(), fault_node);
 
 			if(ele_iterator)
@@ -1375,9 +1532,10 @@ Axis2Client::FaultType Axis2Client::handle_soap_fault(axiom_soap_fault_t * soap_
 				while(axiom_child_element_iterator_has_next(ele_iterator, env.get()))
 				{
 					node = axiom_child_element_iterator_next(ele_iterator, env.get());
+
 					if(node)
 					{
-						element = (axiom_element_t *) axiom_node_get_data_element(node, env.get());
+						element = (axiom_element_t *)axiom_node_get_data_element(node, env.get());
 
 						if(element)
 						{
@@ -1386,19 +1544,28 @@ Axis2Client::FaultType Axis2Client::handle_soap_fault(axiom_soap_fault_t * soap_
 
 							if(localname)
 							{
-								if      (std::strcmp(localname, AXIOM_SOAP12_SOAP_FAULT_CODE_LOCAL_NAME)   == 0) { fault.code   = get_soap_fault_code(node, element);   }
-								else if (std::strcmp(localname, AXIOM_SOAP11_SOAP_FAULT_CODE_LOCAL_NAME)   == 0) { fault.code   = get_soap_fault_code(node, element);   }
-								else if (std::strcmp(localname, AXIOM_SOAP12_SOAP_FAULT_REASON_LOCAL_NAME) == 0) { fault.reason = get_soap_fault_reason(node, element); }
-								else if (std::strcmp(localname, AXIOM_SOAP11_SOAP_FAULT_STRING_LOCAL_NAME) == 0) { fault.reason = get_soap_fault_reason(node, element); }
-								else if (std::strcmp(localname, AXIOM_SOAP12_SOAP_FAULT_DETAIL_LOCAL_NAME) == 0 ||
-										 std::strcmp(localname, AXIOM_SOAP11_SOAP_FAULT_DETAIL_LOCAL_NAME)) 	 { fault.details = get_soap_fault_detail(node, element); }
-								else if (std::strcmp(localname, AXIOM_SOAP12_SOAP_FAULT_ROLE_LOCAL_NAME)   == 0 ||
-										 std::strcmp(localname, AXIOM_SOAP11_SOAP_FAULT_ACTOR_LOCAL_NAME)) 	     { fault.details = get_soap_fault_reason(node, element); }
+							    if(isFaultCodeByLocalName(localname))
+							    {
+							        fault.code = getSoapFaultCode(node, element);
+							    }
 
+							    if(isFaultDetailByLocalName(localname))
+							    {
+							        fault.details = getSoapFaultDetail(node, element);
+							    }
+
+							    if(isFaultReasonByLocalName(localname))
+							    {
+							        fault.reason = getSoapFaultReason(node, element);
+							    }
+							    if(isFaultRoleByLocalName(localname))
+							    {
+							        fault.role = getSoapFaultRoleUri(node, element);
+							    }
 							}
 						}
 					}
-				}//
+				}// end of while
 			}
 		}
 	}
@@ -1410,11 +1577,12 @@ Axis2Client::FaultType Axis2Client::handle_soap_fault(axiom_soap_fault_t * soap_
  * Get the latest fault message
  *
  * @access protected
- * @return string
+ *
+ * @return FaultType
  */
 Axis2Client::FaultType Axis2Client :: getSoapFault()
 {
-	FaultType                 fault;
+    FaultType                 fault;
 	axiom_soap_envelope_t   * soap_envelope   = nullptr;
 	axiom_soap_body_t       * soap_body       = nullptr;
 	axiom_soap_fault_t      * soap_fault 	  = nullptr;
@@ -1424,13 +1592,16 @@ Axis2Client::FaultType Axis2Client :: getSoapFault()
 
 	if(soap_envelope)
 	{
-		soap_body  = axiom_soap_envelope_get_body (soap_envelope, env.get());
+		soap_body = axiom_soap_envelope_get_body (soap_envelope, env.get());
 
 		if(soap_body)
 		{
 			soap_fault = axiom_soap_body_get_fault (soap_body, env.get());
 
-			fault = handle_soap_fault(soap_fault);
+			if(soap_fault)
+			{
+			    fault = HandleSoapFault(soap_fault);
+			}
 		}
 	}
 
