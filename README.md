@@ -117,11 +117,76 @@ $WSSecToken->setUser("username")->setPassword("password");
 ```
 
 ###WSMessage
+
+WSMessage handle the SOAP message that must be sent. 
+
+`WSMessage::setPayload [string]` : expect a string as the soap xml payload *without* specifying the SoapEnvelope, SoapHeaders nor SoapBody ; This is handled internally by Axis2/c and by the parameters you provide through `WSPolicy`, `WSSecurityToken` or `WSHeaders`. You only focus on the business logic by serializing your objects.  
+
+`WSMessage::setEndpoint` expect a string as the endpoint where reside the soap contract. 
+
+Basic usage : 
 ```
-	$WSMessage
-	->setEndpoint("http(S)://endpoint")
-	->setPayload("<ws:calculate xmlns:ws=""></ws:calculate>");
+$WSMessage = KTWS\WSMessage;
+
+$WSMessage
+->setEndpoint("http(S)://endpoint")
+->setPayload("<ws:calculate xmlns:ws=""></ws:calculate>");
 ```
+
+WS-Adressing is backported, but not yet tested on my side. 
+To get the full documentation, please check the official WSO2 Documentation
+
+
+```
+$WSMessage = KTWS\WSMessage;
+
+$WSMessage
+->setEndpoint("http(S)://endpoint")
+->setPayload("<ws:calculate xmlns:ws=""></ws:calculate>");
+
+->setAction("remoteAction")
+->setFrom([
+	'address' => "http://.....",
+	
+	//Array of unbound wsa Endpoint reference  
+	'referenceParameters' => [
+		
+		//
+	    	'<wsa:EndpointReference xmlns:wsa="..." xmlns:fabrikam="...">
+   		 	<wsa:Address>http://www.fabrikam123.example/acct</wsa:Address>
+   		 	<wsa:PortType>fabrikam:InventoryPortType</wsa:PortType>
+		</wsa:EndpointReference>',
+		
+		//
+		'<wsa:EndpointReference xmlns:wsa="..." xmlns:fabrikam="...">
+   		 	<wsa:Address>http://www.fabrikam123.example/acct</wsa:Address>
+   		 	<wsa:PortType>fabrikam:InventoryPortType</wsa:PortType>
+		</wsa:EndpointReference>'
+		
+	],
+	//Array of unbound wsa metadatas
+	'metadatas' => [
+	]
+])
+```
+This is the same for ReplyTo and Fault : 
+
+```
+->setReply([ same as above ])
+->setFault([ still the same ])
+```
+
+One more thing regarding WS-Adressing, in order to use it you must set, at the KTWS\WSClient level, 
+the following method :
+
+```
+$WSClient->setWSA([string])
+```
+This method expect : 
+
+- "1.0"
+- "submission"
+- "disabled"
 
 ###WSClient
 ```
