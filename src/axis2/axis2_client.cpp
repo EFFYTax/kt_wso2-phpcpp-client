@@ -387,10 +387,10 @@ void Axis2Client :: setHttpTransport()
 		axutil_property_t *http_method_property = axutil_property_create (env.get());
 
 		axutil_property_set_value(
-			http_method_property, env.get(), axutil_strdup (env.get(), [this]()->const char *{ return tansportOpts.http_method.c_str();}())
+			http_method_property, env.get(), axutil_strdup (env.get(), tansportOpts.http_method.c_str())
 		);
 
-		axis2_options_set_property (_client_options.get(), env.get(), AXIS2_HTTP_METHOD, http_method_property);
+		axis2_options_set_property (_client_options.get(), env.get(), "HTTP_METHOD", http_method_property);
 
 		log((boost::format("Setting HTTPMethod %1% property") % tansportOpts.http_method.c_str()).str(), __FILE__,__LINE__);
 	}
@@ -410,9 +410,10 @@ void Axis2Client :: setTransportUrl() {
                 0,0,0, char_transport_url.data()
         );
 
-        axis2_options_set_property(_client_options.get(), env.get(), AXIS2_TRANSPORT_URL, transport_url);
+        axis2_options_set_property(_client_options.get(), env.get(), "TransportURL", transport_url);
 
-        log((boost::format("Setting WS Transport URL :: %1%") % tansportOpts.transport_url.c_str()).str(), __FILE__,__LINE__);
+        log((boost::format("Setting WS Transport URL :: %1%") % tansportOpts.transport_url.c_str()).str(),
+                __FILE__,__LINE__);
     }
 }
 
@@ -858,18 +859,16 @@ axis2_endpoint_ref_t * Axis2Client :: add_endpoint_values_ref(map<string, vector
 
 	//Lambda to add a reference parameter in the form of an AXIOM node
 	//for both metas and params
-	auto set_wsa_params = [this, &endpoint_ref] ( vector<string> vector, const string &type ) mutable
-	{
+	auto set_wsa_params = [this, &endpoint_ref] ( vector<string> vector, const string &type ) mutable {
 		if(vector.size() > 0)
 		{
 			for(auto &xml_str: vector)
 			{
-			    std::unique_ptr<axiom_node_t, std::function<void(axiom_node_t *)>> node{nullptr,
-			        [&](axiom_node_t * p)->void {if(p) std::free(p);
-			    }};
-				node.reset(getAxiomByXMLString(xml_str));
+			    axiom_node_t * node;
 
-				axis2_endpoint_ref_add_ref_param(endpoint_ref, env.get(), node.get());
+				node = getAxiomByXMLString(xml_str);
+
+				axis2_endpoint_ref_add_ref_param(endpoint_ref, env.get(), node);
 
 				log((boost::format("Setting WS-Adressing %1% :: %2%")
 					% type.c_str()

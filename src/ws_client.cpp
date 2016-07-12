@@ -140,11 +140,8 @@ void WSClient :: request() {
 	axis2Client->setWSAOpts();
 	axis2Client->setSoapHeaders();
 	axis2Client->setTimeout();
-	axis2Client->setWSReliableOpts();
+	//axis2Client->setWSReliableOpts();
 
-	axis2Client->response.payload.reset(axis2_svc_client_send_receive (
-	        axis2Client->_svc_client.get(), axis2Client->env.get(), axis2Client->_request_payload.get())
-	);
 /*
  * TODO: Implement
  */
@@ -263,7 +260,7 @@ Php::Value WSClient :: set_http_method(Php::Parameters &params) {
 };
 
 /**
- * Set transport URL ( NOT YET )
+ * Set transport URL
  *
  * @access public
  * @params Php::Parameters params
@@ -278,6 +275,7 @@ Php::Value WSClient :: set_transport_url(Php::Parameters &params) {
 		throw Php::Exception("Unexpected parameter for WSF Transport URL - Expected string");
 
 	axis2Client->tansportOpts.transport_url = p.stringValue();
+
 	self["transportURL"] = p;
 
 	return self;
@@ -315,16 +313,13 @@ Php::Value WSClient :: set_use_wsa(Php::Parameters &params) {
  */
 Php::Value WSClient :: set_wsa_address(Php::Parameters &params) {
 
-	auto p = [params] ()->Php::Value {
-		Php::Value p = params[0];
-		return p.isArray() ? p[WSF_WSA_ADDRESS] : p;
-	};
 	Php::Value self(this);
+	Php::Value p = params[0];
 
-	if(!p().isString() && !p().isArray()) {
+	if(!p.isString() && !p.isArray()) {
 		throw Php::Exception("Unexpected parameter for WSA Address - Expected string or array");
 	}
-	self[WSF_WSA_ADDRESS] = p();
+	self[WSF_WSA_ADDRESS] = p;
 
 	return self;
 };

@@ -207,11 +207,6 @@ public:
 	Php::Value set_proxy_auth_type(Php::Parameters &params);
 
 	/**
-	 *
-	 */
-	Php::Value add_properties(Php::Parameters &params);
-
-	/**
 	 * set http headers
 	 */
 	Php::Value set_http_headers(Php::Parameters &params);

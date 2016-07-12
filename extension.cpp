@@ -45,10 +45,16 @@ extern "C" {
         wsclient.method<&WSClient::set_wspolicy>            ("setPolicy");
         wsclient.method<&WSClient::get_wsmessage>           ("getMessage");
         wsclient.method<&WSClient::get_wssectoken>          ("getSecToken");
+
+
+        //Work w/ REST
         wsclient.method<&WSClient::disable_soap>            ("disableSoap");
 
         //Use WSA
         wsclient.method<&WSClient::set_use_wsa>             ("setWSA");
+        wsclient.method<&WSClient::set_wsa_address>         ("setWSAddress");
+        wsclient.method<&WSClient::set_wsa_ref_params>      ("setWSARefParams");
+
 
         //Use SSL
         wsclient.method<&WSClient::set_client_cert>         ("setSSLClientCert");
@@ -59,6 +65,10 @@ extern "C" {
         wsclient.method<&WSClient::set_http_auth_username>  ("setHTTPUsername");
         wsclient.method<&WSClient::set_http_auth_password>  ("setHTTPPassword");
         wsclient.method<&WSClient::set_http_auth_type>      ("setHTTPAuth");
+        wsclient.method<&WSClient::set_http_method>         ("setHTTPMethod");
+
+        //Transport URL
+        wsclient.method<&WSClient::set_transport_url>       ("setTransportURL");
 
         //Reliable
         wsclient.method<&WSClient::set_ws_reliable> 	    ("setReliable");
