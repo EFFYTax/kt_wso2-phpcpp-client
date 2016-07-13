@@ -25,7 +25,7 @@ void WSFault::__construct
  */
 Php::Value WSFault :: getCode()
 {
-	return _code;
+	return _code.empty() ? "" : _code;
 }
 
 /**
@@ -33,7 +33,7 @@ Php::Value WSFault :: getCode()
  */
 Php::Value WSFault :: getReason()
 {
-	return _reason;
+	return _reason.empty() ? "" : _reason;
 }
 
 /**
@@ -41,7 +41,7 @@ Php::Value WSFault :: getReason()
  */
 Php::Value WSFault :: getRole()
 {
-	return _role;
+	return _role.empty() ? "" : _role;
 }
 
 /**
@@ -49,7 +49,7 @@ Php::Value WSFault :: getRole()
  */
 Php::Value WSFault :: getDetails()
 {
-	return _details;
+	return _details.empty() ? "" : _details;
 }
 
 /**
@@ -57,5 +57,5 @@ Php::Value WSFault :: getDetails()
  */
 Php::Value WSFault :: getXMLNode()
 {
-	return _node;
+	return _node.empty() ? "" : _node;
 }

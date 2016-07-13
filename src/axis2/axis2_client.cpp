@@ -10,12 +10,12 @@ Axis2Client :: Axis2Client(const Axis2Config& config)
     try {
         create();
         /**
-         * Set sandesha2 DB
+         * Set sandesha2 DB, used
          * TODO : Move this into the PHP.INI FIle
          */
         registerModuleOpts("sandesha2", "sandesha2_db", "/tmp/sandesha2_db" );
-    } catch(...) {
-        //
+    } catch(const std::exception &e) {
+        throw std::invalid_argument(e.what());
     }
 };
 
@@ -1256,6 +1256,7 @@ bool Axis2Client :: hasSoapFault()
     return axis2_svc_client_get_last_response_has_fault(_svc_client.get(), env.get());
 };
 
+
 /**
  * Get Last Response as String format
  *
@@ -1271,6 +1272,9 @@ string Axis2Client :: getSoapResponse()
     axiom_node_t            * base            = nullptr;
     axiom_node_t            * response_node   = nullptr;
 
+    //Must re-implement attachments
+    //attachments_found = wsf_client_handle_incoming_attachments (env, client_ht, rmsg,
+    //                soap_envelope, response_payload TSRMLS_CC);
     soap_envelope = axis2_svc_client_get_last_response_soap_envelope (_svc_client.get(), env.get());
 
     if(soap_envelope)
@@ -1291,41 +1295,6 @@ string Axis2Client :: getSoapResponse()
     std::string response(res_text);
 
     return response;
-
-    /*
-    axiom_xml_writer_t * writer         = nullptr;
-    axiom_output_t     * om_output      = nullptr;
-    axis2_char_t       * buffer         = nullptr;
-
-    /*
-     * TODO:  backport attachements @see MTOM
-     */
-    //axiom_soap_envelope_t *soapenvelope = nullptr;
-    //soapenvelope = axis2_svc_client_get_last_response_soap_envelope (_svc_client.get(), env.get());
-    //attachments_found = wsf_client_handle_incoming_attachments (env, client_ht, rmsg,
-    //                soap_envelope, response_payload TSRMLS_CC);
-
-
-    /**
-
-    writer = axiom_xml_writer_create_for_memory (env.get(), nullptr, AXIS2_TRUE, 0,
-            AXIS2_XML_PARSER_TYPE_BUFFER);
-
-    om_output = axiom_output_create (env.get(), writer);
-
-    axiom_node_serialize_sub_tree(response.payload.get(), env.get(), om_output);
-
-    buffer = (axis2_char_t *) axiom_xml_writer_get_xml (writer, env.get());
-
-    string response(buffer);
-
-    axiom_output_free(om_output, env.get());
-
-
-    string response("test");
-
-    return response;
-    **/
 }
 
 /**

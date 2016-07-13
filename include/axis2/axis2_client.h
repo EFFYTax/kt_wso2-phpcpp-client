@@ -446,8 +446,9 @@ public:
 	 */
 	std::shared_ptr<Axis2Message> _wsmessage{nullptr};
 
-	WSSecurityToken 	* _wssectoken = nullptr;
-	WSPolicy 	 		* _wspolicy = nullptr;
+	//PhpBase
+	WSSecurityToken         * _wssectoken = nullptr;
+	WSPolicy                * _wspolicy   = nullptr;
 
 	axis2_endpoint_ref_t    * add_endpoint_values_ref(MAP param);
 };

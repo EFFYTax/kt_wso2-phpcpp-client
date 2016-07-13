@@ -46,6 +46,9 @@ extern "C" {
         wsclient.method<&WSClient::get_wsmessage>           ("getMessage");
         wsclient.method<&WSClient::get_wssectoken>          ("getSecToken");
 
+        //soapFault workaround
+        wsclient.method<&WSClient::hasSoapFault>            ("hasSoapFault");
+        wsclient.method<&WSClient::getSoapFault>            ("getSoapFault");
 
         //Work w/ REST
         wsclient.method<&WSClient::disable_soap>            ("disableSoap");
@@ -143,13 +146,18 @@ extern "C" {
 
 
        // WSClientProxy - Registering methods
-       wsclientproxy.method<&WSClientProxy::__construct> ("__construct");
+       wsclientproxy.method<&WSClientProxy::__construct>            ("__construct");
 
        // WSData - Registering methods
-       wsdata.method<&WSData::__construct> ("__construct");
+       wsdata.method<&WSData::__construct>                          ("__construct");
 
        // WSFault - Registering methods
-       wsfault.method<&WSFault::__construct> ("__construct");
+       wsfault.method<&WSFault::__construct>                    ("__construct");
+       wsfault.method<&WSFault::getCode>                        ("getCode");
+       wsfault.method<&WSFault::getReason>                      ("getReason");
+       wsfault.method<&WSFault::getRole>                        ("getRole");
+       wsfault.method<&WSFault::getDetails>                     ("getDetails");
+       wsfault.method<&WSFault::getXMLNode>                     ("getXMLNode");
 
        // WSHeader - Registering methods
        wsheader.method<&WSHeader::__construct> ("__construct");

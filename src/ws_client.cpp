@@ -5,13 +5,20 @@
  */
 WSClient::WSClient() {
 
-    Axis2Config config;
-    config.home_folder = Php::ini_get("ktwso2.axis2_directory").stringValue();
-    config.log_level   = Php::ini_get("ktwso2.log_level").numericValue();
-    config.log_file    = Php::ini_get("ktwso2.log_filename").stringValue();
-    config.log_path    = Php::ini_get("ktwso2.log_path").stringValue();
+    try {
 
-    axis2Client = std::make_shared<Axis2Client>(config);
+        Axis2Config config;
+
+        config.home_folder = Php::ini_get("ktwso2.axis2_directory").stringValue();
+        config.log_level   = Php::ini_get("ktwso2.log_level").numericValue();
+        config.log_file    = Php::ini_get("ktwso2.log_filename").stringValue();
+        config.log_path    = Php::ini_get("ktwso2.log_path").stringValue();
+
+        axis2Client = std::make_shared<Axis2Client>(config);
+
+    } catch(std::exception& e) {
+        throw Php::Exception(e.what());
+    }
 };
 
 /**
@@ -180,8 +187,20 @@ void WSClient :: request() {
     {
         Axis2Client::FaultType fault = axis2Client->getSoapFault();
 
+        //Ctor must have a other constructor for this... just a bit lazzy
+        WSFault * soapFault = new WSFault();
+        soapFault->_code    = fault.code;
+        soapFault->_details = fault.details;
+        soapFault->_node    = fault.node;
+        soapFault->_reason  = fault.reason;
+        soapFault->_role    = fault.role;
+
+        _soap_fault = Php::Object("KTWS\\WSFault", soapFault);
+
         //Strong limitation of PHP-CPP which is not yet able to throw custom Exception.
         //As a workaround just use standard \Exception with the response payload
+        //Alternatively a WSFault object is hydrated and can be accessed through a
+        //KTWS\WSClient::getSoapFault() as proxy
         throw Php::Exception( fault.node, axis2Client->response.status_code );
     }
 
@@ -199,6 +218,24 @@ void WSClient :: request() {
         axis2Client->_wsmessage->_response = axis2Client->getSoapResponse();
     }
 };
+
+/**
+ * This is a workaround... lack of custom exception in PHP-CPP
+ */
+Php::Value WSClient :: hasSoapFault()
+{
+    Php::Value self(this);
+
+    return axis2Client->hasSoapFault();
+}
+
+/**
+ * Get the soap fault
+ */
+Php::Value WSClient :: getSoapFault()
+{
+    return _soap_fault;
+}
 
 /**
  * Disable soap protocol meaning using rest

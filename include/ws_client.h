@@ -17,6 +17,7 @@
 #include <axis2_const.h>
 #include <axis2/axis2_client.h>
 #include <ws_const.h>
+#include "ws_fault.h"
 
 using namespace std;
 
@@ -29,6 +30,11 @@ private:
      * Shared ptr holding the Axis2Client
      */
     std::shared_ptr<Axis2Client> axis2Client;
+
+    /*
+     *
+     */
+    Php::Object _soap_fault;
 
 public:
 
@@ -51,6 +57,16 @@ public:
 	bool hasProxyAuth();
 
 	bool hasSecurity();
+
+	/*
+	 * Workaround to know if are facing a soapfault
+	 */
+	Php::Value hasSoapFault();
+
+	/**
+	 * Get the soap fault object or return null
+	 */
+	Php::Value getSoapFault();
 
 	/**
 	 *
