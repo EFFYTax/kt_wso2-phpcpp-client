@@ -34,24 +34,23 @@ Axis2Core :: ~Axis2Core()
  */
 void Axis2Core :: initEnvironment() {
 
-    axis2_char_t           log_path[250];
-
-	allocator.reset(axutil_allocator_init(NULL));
+   	allocator.reset(axutil_allocator_init(NULL));
 
 	error.reset(axutil_error_create(allocator.get()));
 
-	if (a2config.log_path.c_str()
-			&& ((0 == strcmp(a2config.log_path.c_str(), "")) || (0 == strcmp(a2config.log_path.c_str(), "."))
-					|| (0 == strcmp(a2config.log_path.c_str(), "./")))) {
-		snprintf(log_path, 256, "%s", a2config.log_file.c_str());
-	} else {
-		snprintf(log_path, 256, "%s/%s", a2config.log_path.c_str(), a2config.log_file.c_str());
-	}
+	std::string full_path = "";
+	full_path
+	.append(a2config.log_path)
+	.append("/")
+	.append(a2config.log_file);
 
 	thread_pool.reset(axutil_thread_pool_init(allocator.get()));
-	_log.reset(axutil_log_create(allocator.get(), nullptr, log_path));
 
-	env.reset(axutil_env_create_with_error_log_thread_pool(allocator.get(), error.get(), _log.get(), thread_pool.get()));
+	_log.reset(axutil_log_create(allocator.get(),
+	        nullptr, full_path.c_str()));
+
+	env.reset(axutil_env_create_with_error_log_thread_pool(allocator.get(),
+	        error.get(), _log.get(), thread_pool.get()));
 
 	if(!env) throw std::runtime_error("Unable to create axis2/c env");
 };
