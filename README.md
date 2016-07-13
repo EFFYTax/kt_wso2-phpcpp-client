@@ -1,23 +1,25 @@
 #KT_WSO2_PHPCPP
 
-WSO2 Web services Framework (WSF) for PHP (client only), rewrited with PHP CPP.  This is under developpement and can not be used for production. Lots of features are not yet backported due to lack of time and testing scenarii 
+WSO2 Web services Framework (WSF) for PHP (client only) based on PHP-CPP. This is under developpement and can not be used for production. Lot of features are not yet backported due to lack of time and testing scenarii 
 
-Important, please keep in mind i'm not a C/C++ dev and there is certainly a lot of ugly things that must be fixed and/or refactored. ( PR are welcome ) 
+**Important** : please keep in mind i'm not a C/C++ dev and there is certainly a lot of ugly things that must be fixed and/or refactored. ( PR are welcome to help and fix ) 
 
-The original WSO2 WSF for PHP extension was a abstract layer for Axis2/c with some additional ( actually optional ) modules such as Rampart/c (WS-SEC), Sandesha2/c (WS-RM ) etc. 
+The original WSO2 WSF for PHP extension was a abstract layer for Axis2/c with some additional ( actually optional from axis2 perspective ) modules such as Rampart/c (WS-SEC), Sandesha2/c (WS-RM ) etc. 
 
-In addtion to this abstract layer, WSO2 developped some PHP scripts handling serialize/unserialize helpers when users want to work in WSDL mode. ( and certainly others stuff ). I did not manage any backport of the old fashion scripts. If you planed to work w/ Object, I suggest to use JMS Serializer and pass the serialized JMS Object  to the `WSMessage::setPayload` method. However, i will investigate how to implement JMS serializer in a while
+In addtion to this layer, WSO2 developped additional PHP scripts handling serialize/unserialize ( when users want works in WSDL). I did not managed nor will do any backport for the old fashion scripts. 
+
+If you plan to work w/ Object, I suggest to use JMS Serializer and pass the serialized Objects to the `WSMessage::setPayload` method. However, i will investigate how to implement JMS serializer in a while.
 
 The API is refactored but is "almost" similar to the native WSO2 extension. I will try to document it ASAP. 
 
-SoapFault are not thrown as KTWS\WSFault object ( formerly know as \WSFault ), still waiting support for custom exceptions from PHPCPP team. This could be normally compiled for PHP7 through the master branch of PHPCPP. 
+SoapFault are not thrown from a KTWS\WSFault object since we are waiting for custom exceptions support in PHP-CPP. This could be normally compiled for PHP7 through the master branch of PHPCPP. I only tested for Php 5.6.x under Ubuntu 14.04-LTS
 
 ## Installation
 
 ###  Axis2/c and co. 
 Firstly clone the following repositories from my git repos :
 
-- kt_axis2c-unofficial
+- axis2_trunk
 - kt_rampart
 - kt_sandesha2
 - kt_savan
@@ -34,7 +36,7 @@ sudo apt-get install php5.6, php5.6-dev
 
 ### PHP-CPP
  
-Then you must grab, compile and install PHP-CPP ( google it ). If you want to prevent compilation issue, checkout it into the following folder : 
+Then you must grab, compile and install PHP-CPP ( google it ). If you want to prevent compilation issue ( for the final module ), checkout it into the following folder : **TODO: maven?**
 
 ```
 sudo mkdir -p /opt/build/php-cpp-1.5.4
