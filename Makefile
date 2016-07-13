@@ -29,7 +29,7 @@ NAME				=	ktwso2
 #	one for each extension. Use this variable to specify this directory.
 #
 
-INI_DIR				=	/opt/php-5.6/etc	
+INI_DIR				=	/etc/php/5.6/cli/conf.d	
 
 
 #
@@ -41,7 +41,7 @@ INI_DIR				=	/opt/php-5.6/etc
 #	this with a different fixed directory
 #
 
-EXTENSION_DIR		=   /opt/php-5.6/lib/php/extensions/no-debug-non-zts-20131226	
+EXTENSION_DIR		=   /usr/lib/php/20131226	
 
 
 #
@@ -85,9 +85,9 @@ LINKER				=	g++
 #	with a list of all flags that should be passed to the linker.
 #
 
-COMPILER_FLAGS		=	-Wall -c -g3 -fvisibility=hidden -Wno-write-strings -I./include -I./include/neethi -I./include/axis2 -I./kt_axis2c/util/src -I/opt/php-5.6/include/php/Zend -I/opt/php-5.6/include/php/TSRM -I/opt/php-5.6/include/php -I/opt/php-5.6/include/php/main -I../kt_sandesha2/include -I./kt_axis2c/include -I./kt_axis2c/util/include -I./kt_axis2c/axiom/include -I./kt_axis2c/neethi/include -I../kt_rampart/include -I/usr/include/boost -I./neethi -std=c++11 -fpic -o
+COMPILER_FLAGS		=	-Wall -c -g3 -fvisibility=hidden -Wno-write-strings -I./include -I./include/neethi -I./include/axis2 -I../axis2c-trunk/util/src -I/opt/php-5.6/include/php/Zend -I/opt/php-5.6/include/php/TSRM -I/opt/php-5.6/include/php -I/opt/php-5.6/include/php/main -I../kt_sandesha2/include -I../axis2c-trunk/include -I../axis2c-trunk/util/include -I../axis2c-trunk/axiom/include -I../axis2c-trunk/neethi/include -I../kt_rampart/include -I/usr/include/boost -I./neethi -std=c++11 -fpic -o
 LINKER_FLAGS		=	-shared 
-LINKER_DEPENDENCIES	=	-L /usr/lib/x86_64-linux-gnu -L/usr/local/axis2c/lib -lxml2 -lphpcpp -laxis2_parser -laxis2_axiom -laxis2_engine -laxutil -laxis2_http_sender -laxis2_http_receiver -lrampart -lneethi -lsandesha2_client  -laxis2_tcp_receiver -laxis2_tcp_sender -laxis2_xpath   -lguththila     -lsandesha2  -lsavan_client -lsavan_msgreceivers -lsavan_publisher -lsavan_subs_mgr -lsavan_util 
+LINKER_DEPENDENCIES	=	-L /usr/lib/x86_64-linux-gnu -L/usr/local/axis2c/lib -lphpcpp -laxis2_parser -laxis2_axiom -laxis2_engine -laxutil -laxis2_http_sender -laxis2_http_receiver -lrampart -lneethi -lsandesha2_client  -laxis2_tcp_receiver -laxis2_tcp_sender -laxis2_xpath   -lguththila     -lsandesha2  -lsavan_client -lsavan_msgreceivers -lsavan_publisher -lsavan_subs_mgr -lsavan_util 
 
 
 #
