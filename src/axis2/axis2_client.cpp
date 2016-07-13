@@ -1264,6 +1264,35 @@ bool Axis2Client :: hasSoapFault()
  */
 string Axis2Client :: getSoapResponse()
 {
+    axiom_soap_envelope_t   * soap_envelope   = nullptr;
+    axiom_soap_body_t       * soap_body       = nullptr;
+    axiom_soap_fault_t      * soap_fault      = nullptr;
+    axis2_char_t            * res_text        = nullptr;
+    axiom_node_t            * base            = nullptr;
+    axiom_node_t            * response_node   = nullptr;
+
+    soap_envelope = axis2_svc_client_get_last_response_soap_envelope (_svc_client.get(), env.get());
+
+    if(soap_envelope)
+    {
+        soap_body = axiom_soap_envelope_get_body (soap_envelope, env.get());
+
+        if(soap_body)
+        {
+            response_node = axiom_soap_body_get_base_node(soap_body, env.get());
+
+            if(response_node)
+            {
+                res_text = axiom_node_to_string (response_node, env.get());
+            }
+        }
+    }
+
+    std::string response(res_text);
+
+    return response;
+
+    /*
     axiom_xml_writer_t * writer         = nullptr;
     axiom_output_t     * om_output      = nullptr;
     axis2_char_t       * buffer         = nullptr;
@@ -1275,6 +1304,9 @@ string Axis2Client :: getSoapResponse()
     //soapenvelope = axis2_svc_client_get_last_response_soap_envelope (_svc_client.get(), env.get());
     //attachments_found = wsf_client_handle_incoming_attachments (env, client_ht, rmsg,
     //                soap_envelope, response_payload TSRMLS_CC);
+
+
+    /**
 
     writer = axiom_xml_writer_create_for_memory (env.get(), nullptr, AXIS2_TRUE, 0,
             AXIS2_XML_PARSER_TYPE_BUFFER);
@@ -1289,8 +1321,54 @@ string Axis2Client :: getSoapResponse()
 
     axiom_output_free(om_output, env.get());
 
+
+    string response("test");
+
     return response;
+    **/
 }
+
+/**
+ * Get the latest fault message
+ *
+ * @access protected
+ *
+ * @return FaultType
+ */
+Axis2Client::FaultType Axis2Client :: getSoapFault()
+{
+    FaultType                 fault;
+    axiom_soap_envelope_t   * soap_envelope   = nullptr;
+    axiom_soap_body_t       * soap_body       = nullptr;
+    axiom_soap_fault_t      * soap_fault      = nullptr;
+    axis2_char_t            * res_text        = nullptr;
+
+    soap_envelope = axis2_svc_client_get_last_response_soap_envelope (_svc_client.get(), env.get());
+
+    if(soap_envelope)
+    {
+        soap_body = axiom_soap_envelope_get_body (soap_envelope, env.get());
+
+        if(soap_body)
+        {
+            soap_fault = axiom_soap_body_get_fault (soap_body, env.get());
+
+            if(soap_fault)
+            {
+                fault = HandleSoapFault(soap_fault);
+            }
+        }
+    }
+
+    log("Fault Node "    + fault.node,     __FILE__,__LINE__);
+    log("Fault code "    + fault.code,     __FILE__,__LINE__);
+    log("Fault reason "  + fault.reason,   __FILE__,__LINE__);
+    log("Fault details " + fault.details,  __FILE__,__LINE__);
+    log("Fault role "    + fault.role,     __FILE__,__LINE__);
+
+    return fault;
+}
+
 
 /**
  * Get the soap fault detail value
@@ -1572,47 +1650,6 @@ Axis2Client::FaultType Axis2Client::HandleSoapFault(axiom_soap_fault_t * soap_fa
             }
         }
     }
-
-    return fault;
-}
-
-/**
- * Get the latest fault message
- *
- * @access protected
- *
- * @return FaultType
- */
-Axis2Client::FaultType Axis2Client :: getSoapFault()
-{
-    FaultType                 fault;
-    axiom_soap_envelope_t   * soap_envelope   = nullptr;
-    axiom_soap_body_t       * soap_body       = nullptr;
-    axiom_soap_fault_t      * soap_fault      = nullptr;
-    axis2_char_t            * res_text        = nullptr;
-
-    soap_envelope = axis2_svc_client_get_last_response_soap_envelope (_svc_client.get(), env.get());
-
-    if(soap_envelope)
-    {
-        soap_body = axiom_soap_envelope_get_body (soap_envelope, env.get());
-
-        if(soap_body)
-        {
-            soap_fault = axiom_soap_body_get_fault (soap_body, env.get());
-
-            if(soap_fault)
-            {
-                fault = HandleSoapFault(soap_fault);
-            }
-        }
-    }
-
-    log("Fault Node "    + fault.node,     __FILE__,__LINE__);
-    log("Fault code "    + fault.code,     __FILE__,__LINE__);
-    log("Fault reason "  + fault.reason,   __FILE__,__LINE__);
-    log("Fault details " + fault.details,  __FILE__,__LINE__);
-    log("Fault role "    + fault.role,     __FILE__,__LINE__);
 
     return fault;
 }

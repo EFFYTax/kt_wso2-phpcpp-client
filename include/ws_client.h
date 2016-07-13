@@ -167,16 +167,6 @@ public:
 	Php::Value set_timeout(Php::Parameters &params);
 
 	/**
-	 * set wsdl
-	 */
-	Php::Value set_wsdl(Php::Parameters &params);
-
-	/**
-	 * set classmap
-	 */
-	Php::Value set_classmap(Php::Parameters &params);
-
-	/**
 	 * set http_auth username
 	 */
 	Php::Value set_http_auth_username(Php::Parameters &params);

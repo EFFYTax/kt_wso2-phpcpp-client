@@ -127,33 +127,42 @@ void WSClient :: request() {
             throw Php::Exception( "request payload node is null" );
     }
 
-    if(hasProxy()) 		axis2Client->setProxy();
-    if(hasProxyAuth())  axis2Client->setProxyAuth();
-    if(hasSSL())   	    axis2Client->setSSLAuthentication();
-    if(hasHTTPAuth())	axis2Client->setHttpAuth();
-    if(hasSecurity())   axis2Client->setWSSecurityOpts();
+    //Configure Axis2/c and relevant modules
+    try {
+        if(hasProxy()) 		axis2Client->setProxy();
+        if(hasProxyAuth())  axis2Client->setProxyAuth();
+        if(hasSSL())   	    axis2Client->setSSLAuthentication();
+        if(hasHTTPAuth())	axis2Client->setHttpAuth();
+        if(hasSecurity())   axis2Client->setWSSecurityOpts();
 
-    axis2Client->setSoapVersion();
-    axis2Client->setHttpTransport();
-    axis2Client->setTransportUrl();
-    axis2Client->setEndpointAndSoapAction();
-    axis2Client->setWSAOpts();
-    axis2Client->setSoapHeaders();
-    axis2Client->setTimeout();
-    axis2Client->setWSReliableOpts();
+        axis2Client->setSoapVersion();
+        axis2Client->setHttpTransport();
+        axis2Client->setTransportUrl();
+        axis2Client->setEndpointAndSoapAction();
+        axis2Client->setWSAOpts();
+        axis2Client->setSoapHeaders();
+        axis2Client->setTimeout();
+        axis2Client->setWSReliableOpts();
 
-    axis2Client->response.payload.reset(axis2_svc_client_send_receive (
-            axis2Client->_svc_client.get(), axis2Client->env.get(), axis2Client->_request_payload.get()));
+        //Out
+        axis2Client->response.payload.reset(axis2_svc_client_send_receive (
+                axis2Client->_svc_client.get(), axis2Client->env.get(), axis2Client->_request_payload.get()));
 
+    } catch(const std::exception &e) {
+        throw Php::Exception(e.what());
+    }
     /*
-     * TODO: Implement
+     * TODO: Implement WS-R / Oneway
      */
     //	if(_is_engaged_rm){}
 
-    axis2Client->response.status_code 	= axis2_svc_client_get_http_status_code(axis2Client->_svc_client.get(), axis2Client->env.get());
-    std::string     str_status_code     = std::to_string(axis2Client->response.status_code);
-    string          error_msg           = axutil_error_get_message(axis2Client->env.get()->error);
-    axis2_status_t  error_code          = axutil_error_get_status_code(axis2Client->env.get()->error);
+    axis2Client->response.status_code = axis2_svc_client_get_http_status_code(axis2Client->_svc_client.get(),
+            axis2Client->env.get());
+
+    //
+    std::string     str_status_code = std::to_string(axis2Client->response.status_code);
+    string          error_msg       = axutil_error_get_message(axis2Client->env.get()->error);
+    axis2_status_t  error_code      = axutil_error_get_status_code(axis2Client->env.get()->error);
 
     axis2Client->log("http status code :: " + str_status_code, __FILE__,__LINE__);
 

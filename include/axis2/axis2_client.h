@@ -446,7 +446,6 @@ public:
 	 */
 	std::shared_ptr<Axis2Message> _wsmessage{nullptr};
 
-	//WSMessage           * _wsmessage = nullptr;
 	WSSecurityToken 	* _wssectoken = nullptr;
 	WSPolicy 	 		* _wspolicy = nullptr;
 
