@@ -75,7 +75,9 @@ $WSHeader
 ->setPrefix("myPrefix")
 ->setName("MyHeaderName")
 ->setMustUnderstand(true)
-->setRole(1) //0,1,3 <- check the WSO2 API
+
+//Int as the role : 0,1,3 <- check the WSO2 API
+->setRole(1) 
 
 Array of unbound KTWS\Header or string or xml
 ->setData();
@@ -148,5 +150,5 @@ try {
 ```
 
 #Credits 
-Alexis Gruet <alexis.gruet@kroknet.com>
-WSO2 team 
+- Alexis Gruet <alexis.gruet@kroknet.com>
+- WSO2 team 
