@@ -58,6 +58,46 @@ $WSSecToken = new KTWS\WSSecurityToken;
 $WSPolicy   = new KTWS\WSPolicy;
 ```
 
+### WSHeader
+
+Soap header can be defined by a KTWS\WSHeader instance, it support nested headers through 
+the setData() method. 
+
+Soap Header(s) must be set by `WSMessage::setHeaders()` method, which support a array of unbound 
+headers
+
+```
+$WSHeader  = new KTWS\WSHeader;
+$WSMessage = new KTWS\WSMessage;
+
+$WSHeader
+->setNs("myNamespace")
+->setPrefix("myPrefix")
+->setName("MyHeaderName")
+->setMustUnderstand(true)
+->setRole(1) //0,1,3 <- check the WSO2 API
+
+Array of unbound KTWS\Header or string or xml
+->setData();
+
+$WSMessage->setHeaders([$WSHeader, $WSHeader1, $WSHeader2]);
+```
+
+According to your definition, Axis2 will produce for example a log similar to : 
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<myHeader:name xmlns:myHeader="header0" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" soapenv:mustUnderstand="1" soapenv:actor="http://www.w3.org/2003/05/soap-envelope/role/none">
+   <myHeader1:theHeader1 xmlns:myHeader1="header1" soapenv:actor="http://www.w3.org/2003/05/soap-envelope/role/none">data1</myHeader1:theHeader1>
+   <myHeader2:theHeader2 xmlns:myHeader2="header2" soapenv:actor="http://www.w3.org/2003/05/soap-envelope/role/none">data2</myHeader2:theHeader2>
+   <myHeader3:theHeader3 xmlns:myHeader3="header3" soapenv:actor="http://www.w3.org/2003/05/soap-envelope/role/none">data3</myHeader3:theHeader3>
+   <myHeader4:theHeader4 xmlns:myHeader4="header4" soapenv:actor="http://www.w3.org/2003/05/soap-envelope/role/next">
+      <ns4:theHeader5 xmlns:ns4="header5" soapenv:actor="http://www.w3.org/2003/05/soap-envelope/role/none">data5</ns4:theHeader5>
+      <ns5:theHeader6 xmlns:ns5="header6">data6</ns5:theHeader6>
+   </myHeader4:theHeader4>
+</myHeader:name>
+```
+
 ### Policy
 ```
 $policy_xml = <<<XML
@@ -89,8 +129,7 @@ $WSClient
 ->setSecToken($WSSecToken)
 ->setPolicy($WSPolicy)
 ->setSSLServerCert("Absolute path to SSL CA"); //Mandatory if working w/ SSL
-``
-`
+```
 
 ###Requesting
 
