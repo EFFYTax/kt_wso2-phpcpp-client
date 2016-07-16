@@ -280,4 +280,5 @@ However, Sandesha2/c is loaded by default.
 
 #Credits 
  - Alexis Gruet <alexis.gruet@kroknet.com>
- - WSO2 team 
+ - WSO2 team
+ - PHP-CPP team
