@@ -250,6 +250,9 @@ $WSClient
 ->setHTTPPassword("pasword")
 ->setHTTPAuth("Basic");
 
+//Timeout in sec
+->setTimeout(30)
+
 //Mandatory if working w/ SSL
 ->setSSLServerCert("Absolute path to SSL CA");
 ```
@@ -271,8 +274,9 @@ try {
 
 ###WS-RM / Reliable Messaging
 
-One way channel is not implemented, i still need to investigate why WSO2 team disabled this feature.
-However, Sandesha2/c, the module handling WS-Reliable is loaded by default. 
+i still need to investigate why WSO2 team disabled this feature.
+However, Sandesha2/c is loaded by default. 
+
 
 #Credits 
  - Alexis Gruet <alexis.gruet@kroknet.com>
