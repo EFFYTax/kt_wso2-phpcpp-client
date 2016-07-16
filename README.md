@@ -111,10 +111,45 @@ XML;
 $WSPolicy->setXMLPolicy($policy_xml);
 ```
 
-###Security Token ( Username Token )
+###Security Token 
+`KTWS\SecurityToken` and `KTWS\WSPolicy` provide a nice API to deal with WS-Security. WS-Security relay heavily on Rampart/c and neethi/c, both are modules for axis2/c 
+
+Example for Username Token 
 ```
-$WSSecToken->setUser("username")->setPassword("password");
+$WSSecToken
+->setUser("username")
+->setPassword("password");
 ```
+In order to use this scenario, you must implement a valid Policy through `KTWS\WSPolicy`
+
+```
+$my_policy = <<<XML
+<wsp:Policy wsu:Id="RmPolicy" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsrm="http://schemas.xmlsoap.org/ws/2005/02/rm/policy" xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702" xmlns:sanc="http://ws.apache.org/sandesha2/c/policy" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+    <wsp:ExactlyOne>
+        <wsp:All>
+	<sp:TransportBinding>
+                <wsp:Policy>
+                </wsp:Policy>
+            </sp:TransportBinding>
+            <sp:SignedSupportingTokens>
+                <wsp:Policy>
+                    <sp:UsernameToken
+                        sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
+                        <wsp:Policy>
+                            <sp:WssUsernameToken10 />
+                        </wsp:Policy>
+                    </sp:UsernameToken>
+                </wsp:Policy>
+            </sp:SignedSupportingTokens
+        </wsrm:RMAssertion>
+        </wsp:All>
+    </wsp:ExactlyOne>
+</wsp:Policy>
+XML;
+
+$WSPolicy->setXMLPolicy($my_policy);
+```
+
 
 ###WSMessage
 
@@ -213,6 +248,10 @@ try {
 	echo $e->getMessage();
 }
 ```
+
+###WS-Reliable
+
+One way channel is not implemented, i still need to investigate why WSO2 disabled this feature. 
 
 #Credits 
 - Alexis Gruet <alexis.gruet@kroknet.com>
