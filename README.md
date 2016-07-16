@@ -226,18 +226,38 @@ This method expect :
 ###WSClient
 ```
 $WSClient
+
+//Soap version 1.1 or 1.2
 ->setSoapVersion(1.2)
+
+//Work w/ REST
+->disableSoap()
+
+//
 ->setMessage($WSMessage)
 ->setSecToken($WSSecToken)
 ->setPolicy($WSPolicy)
-->setSSLServerCert("Absolute path to SSL CA"); //Mandatory if working w/ SSL
+
+//Proxy
+->setProxyHost("127.0.0.1")
+->setProxyPort("8080")
+->setProxyUsername("proxyUsername")
+->setProxyPassword("proxyPassword")
+->setProxyAuthType("proxyAuth")
+
+//HTTP Auth
+->setHTTPUsername("username")
+->setHTTPPassword("pasword")
+->setHTTPAuth("Basic");
+
+//Mandatory if working w/ SSL
+->setSSLServerCert("Absolute path to SSL CA");
 ```
 
 ###Requesting
 
 ```
 try {
-
 	$WSClient->request();
 	
 	print_r($WSMessage->getResponse());
