@@ -169,13 +169,24 @@ $WSMessage
 	]
 ])
 ```
-
 This is the same for ReplyTo and Fault : 
 
 ```
 ->setReply([ same as above ])
 ->setFault([ still the same ])
 ```
+
+One more thing regarding WS-Adressing, in order to use it you must set, at the KTWS\WSClient level, 
+the following method :
+
+```
+$WSClient->setWSA([string])
+```
+This method expect : 
+
+- "1.0"
+- "submission"
+- "disabled"
 
 ###WSClient
 ```
