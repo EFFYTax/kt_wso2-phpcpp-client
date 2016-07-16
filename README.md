@@ -251,7 +251,8 @@ try {
 
 ###WS-Reliable
 
-One way channel is not implemented, i still need to investigate why WSO2 disabled this feature. 
+One way channel is not implemented, i still need to investigate why WSO2 team disabled this feature.
+However, Sandesha2/c, the module handling WS-Reliable is loaded by default. 
 
 #Credits 
 - Alexis Gruet <alexis.gruet@kroknet.com>
