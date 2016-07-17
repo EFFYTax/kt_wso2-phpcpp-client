@@ -16,14 +16,6 @@ SoapFault are not thrown from a KTWS\WSFault object since we are waiting for cus
 
 ## Installation
 
-###  Axis2/c and co. 
-Firstly clone the following repositories from my git repos :
-
-- axis2_trunk
-- kt_rampart
-- kt_sandesha2
-- kt_savan
-
 ####Preparing the build env
 
 ```
@@ -34,7 +26,6 @@ mkdir -p /opt/build && cd /opt/build
 
 ### PHP 5.6 - Ubuntu 
 
-This is what i used 
 ```
 sudo LC_ALL=en_US.UTF-8 add-apt-repository ppa:ondrej/php
 sudo apt-get update
@@ -43,14 +34,16 @@ sudo apt-get install php5.6, php5.6-dev
 
 ####Axis2/c & co
 
-A bit messy... 
+*TODO: maven ?*
 ```
+git clone https://github.com/CopernicaMarketingSoftware/PHP-CPP-LEGACY.git
 git clone https://github.com/alexis-gruet/kt_wso2-phpcpp-client.git
 git clone https://github.com/alexis-gruet/axis2c-trunk.git
 git clone https://github.com/alexis-gruet/kt_rampart.git
 git clone https://github.com/alexis-gruet/kt_sandesha2.git
 git clone https://github.com/alexis-gruet/kt_savan.git
 
+mv PHP-CPP-LEGACY.git php-cpp-1.5.4
 cd axis2c-trunk
 
 export CC="gcc-4.4"
@@ -91,22 +84,24 @@ When running the `ldconfig` command you will notice of link expected... it must 
 
 ### PHP-CPP
  
-You must grab, compile and install PHP-CPP ( google it ). If you want to prevent compilation issue ( for the final module ), checkout it into the following folder : **TODO: maven?**
+You must grab, compile and install PHP-CPP ( google it ). If you want to prevent compilation issue ( for the final module ), checkout it into the following folder :
 
 (we are always under /opt/build/kt_wso2-phpcpp-client)
 ```
 cd ../
 
-git clone https://github.com/CopernicaMarketingSoftware/PHP-CPP-LEGACY.git
+export CC="g++-4.8"
 
-mv PHP-CPP-LEGACY.git php-cpp-1.5.4
 cd php-cpp-1.5.4
 make && sudo make install
+
 ```
 
 ### KT_WSO2_PHPCPP 
 
-TO BE Continued
+Final step, type `php-config --extension-dir` in the terminal and copy the full path in the `Makefile` line 44 ( EXTENSION_DIR )
+
+Line 32 (INI_DIR) you must fill the full path for the .ini file. Using the PPA for PHP ( above ) path was  /etc/php/5.6/cli/conf.d
 
 ## API
 
