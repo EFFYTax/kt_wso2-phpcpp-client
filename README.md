@@ -24,24 +24,84 @@ Firstly clone the following repositories from my git repos :
 - kt_sandesha2
 - kt_savan
 
-and follow the compilation instructions shipped for each one in the README.md. You will have a working axis2 environnement. 
+####Preparing the build env
+
+```
+sudo apt-get install libssl-dev build-essential libtool automake pkgconf g++-4.4 g++-4.8 libjson0-dev 
+
+mkdir -p /opt/build && cd /opt/build
+```
 
 ### PHP 5.6 - Ubuntu 
 
+This is what i used 
 ```
 sudo LC_ALL=en_US.UTF-8 add-apt-repository ppa:ondrej/php
 sudo apt-get update
 sudo apt-get install php5.6, php5.6-dev
 ```
 
+####Axis2/c & co
+
+A bit messy... 
+```
+git clone https://github.com/alexis-gruet/kt_wso2-phpcpp-client.git
+git clone https://github.com/alexis-gruet/axis2c-trunk.git
+git clone https://github.com/alexis-gruet/kt_rampart.git
+git clone https://github.com/alexis-gruet/kt_sandesha2.git
+git clone https://github.com/alexis-gruet/kt_savan.git
+
+cd axis2c-trunk
+
+export CC="gcc-4.4"
+
+./autogen.sh
+./configure --prefix=/usr/local/axis2c --enable-openssl=yes --with-openssl=/usr/include/openssl --disable-libxml2 --enable-guththila=yes --enable-json=yes --enable-trace=yes --enable-tcp --with-json=/usr/include/json-c
+make && sudo make install
+
+cd ../kt_rampart
+
+./autogen.sh
+ ./configure --with-openssl=/usr/include/openssl --with-axis2=/usr/local/axis2c/include/axis2-1.7.0 --prefix=/usr/local/axis2c 
+ make && sudo make install
+ 
+ cd ../kt_sandesha2
+ 
+ ./autogen.sh
+ ./configure --with-axis2=/usr/local/axis2c/include/axis2-1.7.0 --prefix=/usr/local/axis2c
+ make && sudo make install
+ 
+ cd ../kt_savan
+ 
+ ./autogen.sh
+ ./configure --with-axis2=/usr/local/axis2c/include/axis2-1.7.0 --prefix=/usr/local/axis2c 
+ make && sudo make install
+ 
+ cd ../kt_wso2-phpcpp-client.git
+ sudo cp conf/axis2.xml /usr/local/axis2c/
+ sudo cp conf/modules/sandesha2/module.xml /usr/local/axis2c/modules/sandesha2
+ sudo cp conf/modules/rampart/module.xml   /usr/local/axis2c/modules/rampart
+ 
+ sudo bash 
+ sudo cp /usr/local/axis2c/lib/ktwso2.conf /etc/ld.so.conf.d
+ sudo ldconfig
+ exit
+```
+When running the `ldconfig` command you will notice of link expected... it must be fixed in the sandesha2 makefile. 
+
 ### PHP-CPP
  
-Then you must grab, compile and install PHP-CPP ( google it ). If you want to prevent compilation issue ( for the final module ), checkout it into the following folder : **TODO: maven?**
+You must grab, compile and install PHP-CPP ( google it ). If you want to prevent compilation issue ( for the final module ), checkout it into the following folder : **TODO: maven?**
 
+(we are always under /opt/build/kt_wso2-phpcpp-client)
 ```
-sudo mkdir -p /opt/build/php-cpp-1.5.4
-git clone phpcpp-legacy
-make && sudo make install 
+cd ../
+
+git clone https://github.com/CopernicaMarketingSoftware/PHP-CPP-LEGACY.git
+
+mv PHP-CPP-LEGACY.git php-cpp-1.5.4
+cd php-cpp-1.5.4
+make && sudo make install
 ```
 
 ### KT_WSO2_PHPCPP 
