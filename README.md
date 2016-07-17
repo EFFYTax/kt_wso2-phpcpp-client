@@ -152,6 +152,44 @@ XML;
 $WSPolicy->setXMLPolicy($my_policy);
 ```
 
+###WSFault
+
+Since PHPCPP does not provive custom exception, hence this object could not be catchable by PHP. However 
+some helpers are implemented such as `WSClient::hasSoapFault` identifing if the Soap request was fault.
+
+getter are pretty clear :  
+
+```
+try {
+
+	$WSClient->request();
+	
+	$WSClient->getMessage()->getResponse();
+		-or-
+	$WSClient->getResponse();
+	
+} catch(\Exception $e) {
+	
+	if($WSClient->hasSoapFault())
+	{
+		$WSFault = $WSClient->getSoapFault();
+		
+		$WSFault->getXMLNode();
+		$WSFault->getCode();
+		$WSFault->getRole();
+		$WSFault->getReason();
+		$WSFault->getDetails();
+			
+			-or-
+		
+		echo $e->getMessage(); which give the raw xml node
+	} 
+	else 
+	{
+		//Std exception
+	}
+}
+```
 
 ###WSMessage
 
