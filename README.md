@@ -1,6 +1,6 @@
 #KT_WSO2_PHPCPP
 
-WSO2 Web services Framework (WSF) for PHP (client only) based on PHP-CPP. This is under developpement and can not be used for production. Lot of features are not yet backported due to lack of time and testing scenarii 
+WSO2 Web services Framework (WSF) for PHP (client only) based on PHP-CPP. This is under developpement and can not be used for production. Lot of features are not yet backported due to lack of time and testing scenarii.
 
 **Important** : please keep in mind i'm not a C/C++ dev and there is certainly a lot of ugly things that must be fixed and/or refactored. ( PR are welcome to help and fix ) 
 
@@ -12,7 +12,7 @@ If you plan to work w/ Object, I suggest to use JMS Serializer and pass the seri
 
 The API is refactored but is "almost" similar to the native WSO2 extension. I will try to document it ASAP. 
 
-SoapFault are not thrown from a KTWS\WSFault object since we are waiting for custom exceptions support in PHP-CPP. This could be normally compiled for PHP7 through the master branch of PHPCPP. I only tested for Php 5.6.x under Ubuntu 14.04-LTS
+SoapFault are not thrown from a KTWS\WSFault object since we are waiting for custom exceptions support in PHP-CPP. This could be normally compiled for PHP7 through the master branch of PHPCPP. I only tested for Php 5.6.x under Ubuntu 14.04-LTS w/ the PHPCPP-LEGACY. 
 
 ## Installation
 
