@@ -28,9 +28,6 @@ class Axis2Client
 	typedef map<string, vector<string>> MAP;
 
 public:
-
-
-
 	/*
 	 * Structure holding WS-RM options
 	 */
@@ -200,6 +197,16 @@ public:
 	 * @return void
 	 */
 	void setRampartOptions();
+
+	/**
+	 * Create the service client
+	 */
+	void createServiceClient();
+
+	/**
+	 * Destroy the service client
+	 */
+	void destroyServiceClient();
 
 	/**
 	 * Create a WSPolicy

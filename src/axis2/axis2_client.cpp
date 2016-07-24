@@ -4,31 +4,12 @@
  * ctor
  */
 Axis2Client :: Axis2Client(const Axis2Config& config)
-: Axis2Core(config)
-{
-    //Initialise Axis2c service client
-    try {
-        create();
-        /**
-         * Set sandesha2 DB, used
-         * TODO : Move this into the PHP.INI FIle
-         */
-        registerModuleOpts("sandesha2", "sandesha2_db", "/tmp/sandesha2_db" );
-    } catch(const std::exception &e) {
-        throw std::invalid_argument(e.what());
-    }
-};
+: Axis2Core(config){};
 
 /**
  * dtor
  */
-Axis2Client :: ~Axis2Client()
-{
-    if(_svc_client.get()) {
-        axis2_svc_client_free(_svc_client.get(), env.get());
-        _svc_client = nullptr;
-    }
-};
+Axis2Client :: ~Axis2Client(){};
 
 /**
  * Create the Axis2 service client
@@ -36,7 +17,7 @@ Axis2Client :: ~Axis2Client()
  * @access private
  * @return void
  */
-void Axis2Client :: create()
+void Axis2Client :: createServiceClient()
 {
     _svc_client.reset(axis2_svc_client_create(
             env.get(), a2config.home_folder.c_str()));
@@ -45,11 +26,25 @@ void Axis2Client :: create()
         throw std::invalid_argument("Could not init the axis2/c service client");
 
     _client_options.reset((axis2_options_t *)axis2_svc_client_get_options(
-            _svc_client.get(), env.get()));
+                    _svc_client.get(), env.get()));
 
     if(!_client_options)
         throw std::invalid_argument("Could not init the axis2/c client options");
+
+    //IF WS-RM
+    registerModuleOpts("sandesha2", "sandesha2_db", "/tmp/sandesha2_db" );
 };
+
+/**
+ * Destroy the service client
+ */
+void Axis2Client :: destroyServiceClient()
+{
+    if(_svc_client.get()) {
+        axis2_svc_client_free(_svc_client.get(), env.get());
+        _svc_client = nullptr;
+    }
+}
 
 /**
  * Gets SOAP version URI.
@@ -815,6 +810,8 @@ void Axis2Client :: setTimeout()
     axis2_options_set_timeout_in_milli_seconds(
             _client_options.get(), env.get(), 1000 * tansportOpts.timeout
     );
+
+    log("Setting Timeout > " + std::to_string(tansportOpts.timeout), __FILE__,__LINE__);
 }
 
 /**

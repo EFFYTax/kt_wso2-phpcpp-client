@@ -31,13 +31,7 @@ WSClient :: ~WSClient(){};
  *
  * {{{ proto void WSClient::__construct(string uri[, array options])
  */
-void WSClient :: __construct() {
-
-    //Check for axis2c service client ready
-    if(!axis2Client->_svc_client) {
-        throw Php::Exception("Failed to create axis2c service client - Check your configuration and log file");
-    }
-};
+void WSClient :: __construct(){};
 
 /**
  * Check if the WSClient has a WSMessage instance
@@ -121,8 +115,24 @@ void WSClient :: request() {
         throw Php::Exception("Need a WSMessage Instance");
     }
 
+    /**
+     * For a unknown reason, the service client could not be re-used and httpclient crash
+     * when calling axis2_svc_client_send_receive with the same svc_client.
+     * Crash occurs somewhere in soap_builder.c while building the soap_env.
+     * ( while next - soap_builder.c:265 ).
+     *
+     * Someone faced the same issue.
+     *
+     * http://mail-archives.apache.org/mod_mbox/axis-c-dev/200608.mbox/%3C0DD39110AD1C434C92A686A6F8995D604B1E3A@SRV-MAIL.net.billing.ru%3E
+     *
+     * I created a JIRA... maybe someone will answer...
+     *
+     * https://issues.apache.org/jira/browse/AXIS2C-1686
+     */
+    axis2Client->createServiceClient();
+
     axis2Client->log((boost::format("ktws::payload is ready :: %1%")
-    % axis2Client->_wsmessage->getPayload()->get<string>()).str(), __FILE__,__LINE__);
+        % axis2Client->_wsmessage->getPayload()->get<string>()).str(), __FILE__,__LINE__);
 
     axis2Client->_request_payload.reset(axis2Client->getAxiomByXMLString(axis2Client->_wsmessage->getPayload()->get<string>()));
 
@@ -136,10 +146,11 @@ void WSClient :: request() {
 
     //Configure Axis2/c and relevant modules
     try {
-        if(hasProxy()) 		axis2Client->setProxy();
+
+        if(hasProxy())      axis2Client->setProxy();
         if(hasProxyAuth())  axis2Client->setProxyAuth();
-        if(hasSSL())   	    axis2Client->setSSLAuthentication();
-        if(hasHTTPAuth())	axis2Client->setHttpAuth();
+        if(hasSSL())        axis2Client->setSSLAuthentication();
+        if(hasHTTPAuth())   axis2Client->setHttpAuth();
         if(hasSecurity())   axis2Client->setWSSecurityOpts();
 
         axis2Client->setSoapVersion();
@@ -151,22 +162,22 @@ void WSClient :: request() {
         axis2Client->setTimeout();
         axis2Client->setWSReliableOpts();
 
-        //Out
         axis2Client->response.payload.reset(axis2_svc_client_send_receive (
                 axis2Client->_svc_client.get(), axis2Client->env.get(), axis2Client->_request_payload.get()));
 
     } catch(const std::exception &e) {
         throw Php::Exception(e.what());
     }
+
     /*
      * TODO: Implement WS-R / Oneway
+     * if(_is_engaged_rm){}
      */
-    //	if(_is_engaged_rm){}
+    axis2Client->response.status_code =
+            axis2_svc_client_get_http_status_code(axis2Client->_svc_client.get(),
+                    axis2Client->env.get());
 
-    axis2Client->response.status_code = axis2_svc_client_get_http_status_code(axis2Client->_svc_client.get(),
-            axis2Client->env.get());
-
-    //
+    //Response code and errors
     std::string     str_status_code = std::to_string(axis2Client->response.status_code);
     string          error_msg       = axutil_error_get_message(axis2Client->env.get()->error);
 
@@ -216,6 +227,8 @@ void WSClient :: request() {
     {
         axis2Client->_wsmessage->_response = axis2Client->getSoapResponse();
     }
+
+    axis2Client->destroyServiceClient();
 };
 
 /**
