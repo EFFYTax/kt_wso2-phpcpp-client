@@ -24,7 +24,10 @@ Axis2Client :: Axis2Client(const Axis2Config& config)
  */
 Axis2Client :: ~Axis2Client()
 {
-    axis2_svc_client_free(_svc_client.get(), env.get());
+    if(_svc_client.get()) {
+        axis2_svc_client_free(_svc_client.get(), env.get());
+        _svc_client = nullptr;
+    }
 };
 
 /**
@@ -66,6 +69,234 @@ std::vector<char> Axis2Client :: getSoapVersionURI()
     std::vector<char> buffer(soap_version.data(), soap_version.data() + soap_version.size() + 1u);
 
     return buffer;
+}
+
+/**
+ * Proxy to WSMessage hasMTOM()
+ */
+bool Axis2Client :: hasMTOM()
+{
+    return _wsmessage->hasMTOM();
+}
+
+/*
+ * Has SWA
+ */
+bool Axis2Client :: hasSWA()
+{
+    return _wsmessage->hasSWA();
+}
+
+
+/**
+ * This method enable MTOM support at client level
+ */
+void Axis2Client :: enableMTOM()
+{
+    if(_wsmessage->attachmentsOpts.useMTOM)
+    {
+        axutil_property_t *property = axutil_property_create(env.get());
+
+        if(property)
+        {
+            axutil_property_set_scope(property, env.get(), 0);
+            axutil_property_set_value(property, env.get(), axutil_strdup(env.get(), "true"));
+            axis2_options_set_property(_client_options.get(), env.get(), "enableMTOM", property);
+        }
+    }
+
+    setAttachmentsWithCID();
+
+    return ;
+}
+
+/**
+ * Set Attachments
+ */
+void Axis2Client :: setAttachmentsWithCID()
+{
+    /**
+    axiom_node_t        * node               = nullptr;
+    axiom_node_t        * tmp_node           = nullptr;
+    axiom_element_t     * payload_element    = nullptr;
+    axiom_element_t     * ele                = nullptr;
+
+    std::vector<std::string, char> attachments = _wsmessage->attachmentsOpts._map_attachments;
+
+    if (!_request_payload || attachments.size() == 0)
+    {
+        log("no valid nor attachments found", __FILE__,__LINE__);
+        return;
+    }
+
+    if (axiom_node_get_node_type(_request_payload.get(), env.get()) == 2) //2 = AXIOM_ELEMENT)
+    {
+        payload_element = (axiom_element_t *) axiom_node_get_data_element(
+                _request_payload.get(), env.get());
+
+        axiom_element_get_first_element(payload_element,
+                env.get(), _request_payload.get(), &node);
+
+        if (node && axiom_node_get_node_type(node, env.get()) == 2)
+        {
+            ele = (axiom_element_t *) axiom_node_get_data_element(node, env.get());
+
+            if (ele)
+            {
+                axiom_namespace_t *ns            = nullptr;
+                axis2_char_t      *ns_uri        = nullptr;
+                axis2_char_t      *ele_localname = nullptr;
+
+                ele_localname = axiom_element_get_localname(ele, env.get());
+
+                if (ele_localname && axutil_strcmp(ele_localname, "Include") == 0)
+                {
+                    ns = axiom_element_get_namespace(ele, env.get(), node);
+
+                    //found a matching xop include element
+                    if (ns && (ns_uri = axiom_namespace_get_uri(ns, env.get())) &&
+                            axutil_strcmp(ns_uri, "http://www.w3.org/2004/08/xop/include") == 0)
+                    {
+                        axis2_char_t        *cnt_type             = nullptr;
+                        axis2_char_t        *cid                  = nullptr;
+                        axis2_char_t        *pos                  = nullptr;
+                        axis2_char_t        *id                   = nullptr;
+                        axutil_hash_t       *attribute_hash       = nullptr;
+                        axiom_attribute_t   *content_type_attri   = nullptr;
+
+                        //look for content type in parent
+                        attribute_hash = axiom_element_get_all_attributes(payload_element, env.get());
+
+                        if (attribute_hash)
+                        {
+                            axutil_hash_index_t *hi;
+                            void                *val;
+                            const void          *key;
+
+                            for (hi = axutil_hash_first(attribute_hash, env.get()); hi; hi = axutil_hash_next(env.get(), hi))
+                            {
+                                axutil_hash_this(hi, &key, NULL, &val);
+
+                                if (strstr((axis2_char_t*) key,
+                                        "contentType|http://www.w3.org/2004/06/xmlmime")
+                                        || strstr((axis2_char_t*) key,
+                                                "contentType|http://www.w3.org/2005/05/xmlmime"))
+                                {
+                                    content_type_attri = (axiom_attribute_t*) val;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (content_type_attri)
+                        {
+                            cnt_type = axiom_attribute_get_value(content_type_attri, env.get());
+                        }
+                        else
+                        {
+                            cnt_type = axiom_element_get_attribute_value_by_name(payload_element,
+                                    env.get(), "contentType");
+
+                        }
+                        if (!cnt_type)
+                        {
+                            cnt_type = "application/octet-stream";
+                        }
+
+                        id = axiom_element_get_attribute_value_by_name(ele, env.get(), "href");
+
+                        if (!id) {
+                            return;
+                        }
+
+                        pos = axutil_strstr(id, "cid:");
+
+                        if (pos)
+                        {
+                            cid = id + 4;
+
+                            //Was previously commented
+                            if (zend_hash_find(attach_ht, cid, strlen(cid) + 1, (void **) &tmp) == SUCCESS && Z_TYPE_PP(tmp) == IS_STRING)
+                            {
+                                axiom_node_t            *text_node      = nullptr;
+                                axiom_text_t            *text           = nullptr;
+                                axiom_data_handler_t    *data_handler   = nullptr;
+
+                                axiom_node_detach(node, env.get());
+
+                                std::string payload_string = _wsmessage->getPayload()->get<string>();
+
+                                std::vector<char> char_tmp_node(_wsmessage->getPayload()->get<string>().data(),
+                                        _wsmessage->getPayload()->get<string>().data() + _wsmessage->getPayload()->get<string>().size() + 1u);
+
+                                tmp_node = axiom_node_get_first_child(_request_payload.get(), env.get());
+
+                                while (tmp_node)
+                                {
+                                    axiom_node_t *next_tmp_node = nullptr;
+
+                                    next_tmp_node = axiom_node_get_next_sibling(tmp_node, env.get());
+
+                                    axiom_node_free_tree(tmp_node, env.get());
+
+                                    tmp_node = next_tmp_node;
+                                }
+                                //TODO: Implement caching
+
+                                void *binary_data       = nullptr;
+                                int   binary_data_len   = 0;
+
+                                binary_data_len         = strlen(tmp);
+                                binary_data             = (env.get()->allocator)->malloc_fn(env.get()->allocator,
+                                        sizeof(char) * binary_data_len);
+
+                                std::memcpy(binary_data, tmp_node,
+                                        binary_data_len);
+
+                                if (binary_data)
+                                {
+
+                                    data_handler = axiom_data_handler_create(env.get(),
+                                        0, cnt_type);
+
+                                    axiom_data_handler_set_binary_data(data_handler,
+                                            env.get(), binary_data, binary_data_len);
+                                }
+
+                                text = axiom_text_create_with_data_handler(env.get(),
+                                        _request_payload.get(), data_handler, &text_node);
+
+
+                                if (enable_swa)
+                                {
+                                    axiom_text_set_is_swa(text, env.get(),
+                                            1);
+                                }
+
+                                if (_wsmessage->attachmentsOpts.useMTOM == false)
+                                {
+                                    axiom_text_set_optimize(text, env.get(),0);
+                                }
+
+                                return;
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /*
+    tmp_node = axiom_node_get_first_child(_request_payload, env.get());
+
+    while (tmp_node)
+    {
+        setAttachmentsWithCID (tmp_node, attach_ht, default_cnt_type TSRMLS_CC);
+
+        tmp_node = axiom_node_get_next_sibling(tmp_node, env.get());
+    }*/
+    return;
 }
 
 /**
@@ -158,10 +389,10 @@ void Axis2Client :: setAttachmentCaching()
     bool caching = false;
     if (_svc_client.get() && caching)
     {
-        axutil_param_t   *cache_dir = nullptr;
-        axis2_conf_t     *conf      = nullptr;
+        //axutil_param_t   *cache_dir = nullptr;
+        //axis2_conf_t     *conf      = nullptr;
 
-        conf = getEngineConfiguration();
+        //conf = getEngineConfiguration();
         //cache_dir = axutil_param_create(env, AXIS2_ATTACHMENT_DIR,axutil_strdup(env, "attachment_cache_dir"));
         //addEngineParam(cache_dir);
     }
@@ -1010,6 +1241,20 @@ void Axis2Client :: setRampartOptions()
             log("RAMPART :: Setting password " + _wssectoken->_password, __FILE__,__LINE__);
         }
 
+        /**
+         * Set the password type ( PlainText, Digest etc. )
+         */
+        if(_wssectoken->hasPasswordType())
+        {
+            rampartOpts.password_type = std::vector<char>(_wssectoken->_password_type.data(),
+                    _wssectoken->_password_type.data() + _wssectoken->_password_type.size() + 1u);
+
+            rampart_context_set_password_type(rampartOpts.rampart_ctx.get(),
+                    env.get(), rampartOpts.password_type.data());
+
+            log("RAMPART :: Setting password type " + _wssectoken->_password_type, __FILE__,__LINE__);
+        }
+
         //TODO: Implement Password Callback      @wsf_policy.c:622
         //TODO: Implement PCKS12 KeyStore        @wsf_policy.c:638
         //TODO: Implement Replay Detect Callback @wsf_policy.c:643
@@ -1267,9 +1512,7 @@ string Axis2Client :: getSoapResponse()
 {
     axiom_soap_envelope_t   * soap_envelope   = nullptr;
     axiom_soap_body_t       * soap_body       = nullptr;
-    axiom_soap_fault_t      * soap_fault      = nullptr;
     axis2_char_t            * res_text        = nullptr;
-    axiom_node_t            * base            = nullptr;
     axiom_node_t            * response_node   = nullptr;
 
     //Must re-implement attachments
@@ -1310,7 +1553,6 @@ Axis2Client::FaultType Axis2Client :: getSoapFault()
     axiom_soap_envelope_t   * soap_envelope   = nullptr;
     axiom_soap_body_t       * soap_body       = nullptr;
     axiom_soap_fault_t      * soap_fault      = nullptr;
-    axis2_char_t            * res_text        = nullptr;
 
     soap_envelope = axis2_svc_client_get_last_response_soap_envelope (_svc_client.get(), env.get());
 
@@ -1559,8 +1801,7 @@ Axis2Client::FaultType Axis2Client::HandleSoapFault(axiom_soap_fault_t * soap_fa
 
     if(soap_fault)
     {
-        axiom_node_t              * fault_node  = nullptr;
-        axiom_soap_fault_code_t   * fault_code  = nullptr;
+        axiom_node_t * fault_node  = nullptr;
 
         fault_node = axiom_soap_fault_get_base_node(soap_fault, env.get());
 

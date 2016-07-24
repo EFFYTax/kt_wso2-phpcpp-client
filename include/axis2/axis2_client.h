@@ -29,6 +29,8 @@ class Axis2Client
 
 public:
 
+
+
 	/*
 	 * Structure holding WS-RM options
 	 */
@@ -75,6 +77,7 @@ public:
 	    std::vector<char> certificate;
 	    std::vector<char> receiver_certificate;
 	    std::vector<char> private_key;
+	    std::vector<char> password_type;
 
 	    std::unique_ptr<rampart_context_t, std::function<void(rampart_context_t *)>> rampart_ctx {nullptr,
 	        [&](rampart_context_t * p){/* Free'd by axutil_allocator_free_impl */}
@@ -170,6 +173,24 @@ public:
 	 * Create the Axis2 service client
 	 */
 	void create();
+
+	/*
+	 *
+	 */
+	bool hasSWA();
+	/**
+	 *
+	 */
+	bool hasMTOM();
+	/**
+	 *
+	 */
+	void enableMTOM();
+
+	/**
+	 *
+	 */
+	void setAttachmentsWithCID();
 
 	/**
 	 * Set rampart options

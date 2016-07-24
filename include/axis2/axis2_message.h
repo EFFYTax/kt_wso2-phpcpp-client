@@ -12,7 +12,45 @@ class Axis2Message {
 
 public:
 
-    /**
+   /*
+    * Attachments
+    */
+   struct AttachmentsType {
+       string contentType     = "application/octet-stream";
+       bool useMTOM           = true; //swa
+       bool isSWA             = false;
+    //   std::map<std::string,char> _map_attachments;
+   } attachmentsOpts;
+
+
+   /**
+    * hasMTOM
+    */
+   bool hasMTOM()
+   {
+       return attachmentsOpts.useMTOM;
+   }
+
+   /**
+    * hasSWA
+    */
+   bool hasSWA()
+   {
+       return attachmentsOpts.isSWA;
+   }
+
+   /**
+    * Set Attachments
+    */
+   void setAttachments(std::map<std::string,char> map)
+   {
+       if(map.size() > 0)
+       {
+         //  attachmentsOpts._map_attachments = map;
+       }
+   }
+
+   /**
     * A URI representing the endpoint URI of the service to be consumed.
     * This must be present on the client side. In case WS-Addressing is in use,
     * this will be used as the WSA To header.
@@ -81,13 +119,9 @@ public:
 
     std::string _content_type;
 
-    std::string _attachment_content_type = "application/octet-stream";
-
     std::string _rest_content_type;
 
     std::string _response;
-
-    std::map<std::string,std::string> _attachments_map;
 
     /**
      * Get WSHeader

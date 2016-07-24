@@ -169,7 +169,6 @@ void WSClient :: request() {
     //
     std::string     str_status_code = std::to_string(axis2Client->response.status_code);
     string          error_msg       = axutil_error_get_message(axis2Client->env.get()->error);
-    axis2_status_t  error_code      = axutil_error_get_status_code(axis2Client->env.get()->error);
 
     axis2Client->log("http status code :: " + str_status_code, __FILE__,__LINE__);
 

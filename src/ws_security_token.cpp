@@ -369,6 +369,11 @@ bool WSSecurityToken :: hasPassword()
 	return _password.empty() ? false : true;
 }
 
+bool WSSecurityToken :: hasPasswordType()
+{
+    return _password_type.empty() ? false : true;
+}
+
 
 
 

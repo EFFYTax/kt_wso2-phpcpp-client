@@ -26,7 +26,10 @@ Axis2Core :: Axis2Core(const Axis2Config& config) : a2config(config) {
  */
 Axis2Core :: ~Axis2Core()
 {
-	axutil_env_free(env.get());
+   if(env.get()) {
+	    axutil_env_free(env.get());
+	    env = nullptr;
+	}
 };
 
 /**

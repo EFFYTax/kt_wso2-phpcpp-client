@@ -19,7 +19,7 @@ public:
 
 	std::string _user;
 	std::string _certificate;
-	std::string _password_type = "Digest";
+	std::string _password_type;
 	std::string _password;
 	std::string _private_key;
 	std::string _receiver_certificate;
@@ -53,6 +53,8 @@ public:
 	bool hasPrivateKey();
 
 	bool hasPassword();
+
+	bool hasPasswordType();
 
 	bool isFileExist(const std::string& name);
 

@@ -400,9 +400,9 @@ neethi_options_get_root_node(
     axiom_node_t* exact_om_node = NULL;
     axiom_node_t *all_om_node = NULL;
 
-    axiom_element_t* root_om_ele = NULL;
+    axiom_element_t * root_om_ele  = NULL;
     axiom_element_t * exact_om_ele = NULL;
-    axiom_element_t *all_om_ele = NULL;
+    axiom_element_t * all_om_ele   = NULL;
 
     axis2_status_t status = AXIS2_SUCCESS;
 
@@ -414,7 +414,18 @@ neethi_options_get_root_node(
 
     root_om_ele = axiom_element_create(env, NULL, NEETHI_POLICY, wsp_ns, &root_om_node);
 
+    if(!root_om_ele)
+    {
+        return NULL;
+    }
+
     exact_om_ele = axiom_element_create(env, root_om_node, NEETHI_EXACTLYONE, wsp_ns, &exact_om_node);
+
+    if(!exact_om_ele)
+    {
+        return NULL;
+    }
+
     all_om_ele = axiom_element_create(env, exact_om_node, NEETHI_ALL, wsp_ns, &all_om_node);
 
     if(all_om_ele)
@@ -661,6 +672,10 @@ neethi_options_create_policy_node(
 
     /*wsp_ns = axiom_namespace_create(env, NEETHI_NAMESPACE, NEETHI_PREFIX);*/
     policy_ele = axiom_element_create(env, parent_node, NEETHI_POLICY, wsp_ns, &policy_node);
+
+    if(!policy_ele) {
+        return NULL;
+    }
 
     return policy_node;
 
@@ -1004,6 +1019,12 @@ neethi_options_create_signed_parts_node(
         {
             axiom_element_t *ele = NULL;
             ele = axiom_element_create(env, signed_parts_node, RP_BODY, sp_ns, &body_node);
+
+            if(!ele)
+            {
+                return AXIS2_FAILURE;
+            }
+
             return AXIS2_SUCCESS;
         }
         /*Adding Signed headers logic should come here*/
@@ -1033,6 +1054,12 @@ neethi_options_create_encrypted_parts_node(
         {
             axiom_element_t *ele = NULL;
             ele = axiom_element_create(env, encrypted_parts_node, RP_BODY, sp_ns, &body_node);
+
+            if(!ele)
+            {
+                return AXIS2_FAILURE;
+            }
+
             return AXIS2_SUCCESS;
         }
         /*Adding Encrypted headers logic should come here*/

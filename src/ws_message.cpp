@@ -231,7 +231,7 @@ Php::Value WSMessage :: set_attachments(Php::Parameters &params) {
 	if(!p.isArray())
 		throw Php::Exception("Unexpected param for WSMessage::$attachments, must be a array");
 
-	_axis2_message->_attachments_map = p;
+	//_axis2_message->attachmentsOpts._map_attachments = p;
 
 	self[WSF_ATTACHMENTS] = p;
 
@@ -256,7 +256,7 @@ Php::Value WSMessage :: set_attachment_content_type(Php::Parameters &params) {
 	if(!p.isString())
 		throw Php::Exception("Unexpected param for WSMessage::$defaultAttachmentContentType, must be a string");
 
-	_axis2_message->_attachment_content_type = p.stringValue();
+	_axis2_message->attachmentsOpts.contentType = p.stringValue();
 
 	self[WSF_DEFAULT_ATTACHEMENT_CONTENT_TYPE] = p;
 

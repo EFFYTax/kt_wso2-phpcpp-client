@@ -137,8 +137,9 @@ std::string Param :: get()
 template <>
 A Param :: get()
 {
+    A retval;
+
 	if(is_array()) {
-		A retval;
 		retval = boost::get<A>(_param);
 		return retval;
 	}
@@ -146,6 +147,7 @@ A Param :: get()
 	{
 		// Bad type exception
 	}
+	return retval;
 };
 
 /**
@@ -173,6 +175,7 @@ const char * Param :: get()
 	}
 	else
 	{
-		//Bad type exception
+	    // Bad type exception
 	}
+	return nullptr;
 };
