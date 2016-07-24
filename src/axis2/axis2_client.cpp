@@ -1512,6 +1512,7 @@ string Axis2Client :: getSoapResponse()
 {
     axiom_soap_envelope_t   * soap_envelope   = nullptr;
     axiom_soap_body_t       * soap_body       = nullptr;
+    axiom_node_t            * soap_inner      = nullptr;
     axis2_char_t            * res_text        = nullptr;
     axiom_node_t            * response_node   = nullptr;
 
@@ -1530,7 +1531,12 @@ string Axis2Client :: getSoapResponse()
 
             if(response_node)
             {
-                res_text = axiom_node_to_string (response_node, env.get());
+                soap_inner = axiom_node_get_first_element(response_node, env.get());
+
+                if(soap_inner)
+                {
+                    res_text = axiom_node_to_string (soap_inner, env.get());
+                }
             }
         }
     }
