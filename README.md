@@ -206,7 +206,12 @@ Example for Username Token
 $WSSecToken
 ->setUser("username")
 ->setPassword("password");
+->setPasswordType("PlainText || Digest")
 ```
+
+The Digest passwordtype will add a mustUnderstand=1 in SoapHeader, hence response must have a well-formed soapHeader. There is a workaround if response does not have 
+a soapHeader, rampart/module.xml, disable InFlow... 
+
 In order to use this scenario, you must implement a valid Policy through `KTWS\WSPolicy`
 
 ```
