@@ -38,7 +38,7 @@ case "$1" in
         fi
         
         #Trigger LDCONFIG
-     	sudo ldconfig    
+     	ldconfig    
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
