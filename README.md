@@ -19,7 +19,7 @@ SoapFault are not thrown from a KTWS\WSFault object since we are waiting for cus
 ####Preparing the build env
 
 ```
-sudo apt-get install libssl-dev build-essential libtool automake pkgconf g++-4.4 g++-4.8 libjson0-dev liboost-dev
+sudo apt-get install libssl-dev build-essential libtool automake pkgconf g++-4.4 g++-4.8 libjson0-dev libboost-dev 
 
 sudo mkdir -p /opt/build && cd /opt/build
 sudo chown agruet:agruet . ( <- change by your username:group )
