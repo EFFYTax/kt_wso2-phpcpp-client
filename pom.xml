@@ -19,6 +19,7 @@
     <properties>
         <package.name>${project.artifactId}-${package.target}</package.name>
         <package.version>${project.version}.${buildnumber}</package.version>
+        <package.installdir>./</package.installdir>
     </properties>
 
     <organization>
