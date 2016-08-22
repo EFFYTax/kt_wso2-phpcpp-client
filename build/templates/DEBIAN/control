@@ -1,0 +1,9 @@
+Source: ${package.name}
+Section: webapp 
+Priority: extra 
+Maintainer: Alexis Gruet <alexis.gruet@kroknet.com>
+Homepage: https://www.ktws.io/
+Version: ${package.version}
+Package: ${package.name}
+Architecture: all 
+Description: ${description}
