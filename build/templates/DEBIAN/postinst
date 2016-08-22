@@ -19,7 +19,20 @@ set -e
 
 case "$1" in
     configure)
-        #LDCONFIG
+        #AXIS2 Fix broken symlinks
+    
+        #PHPCPP Shared libs symlinks
+        if [ -e libphpcpp.so.1.5.4 ]; then
+		    cp -f libphpcpp.so.1.5.4 /usr/lib/
+	    	ln -f -s /usr/lib/libphpcpp.so.1.5.4 /usr/lib/libphpcpp.so.1.5
+		    ln -f -s /usr/lib/libphpcpp.so.1.5.4 /usr/lib/libphpcpp.so
+	    fi
+	    
+        if [ -e libphpcpp.a.1.5.4 ]; then cp -f libphpcpp.a.1.5.4 /usr/lib/
+		    ln -f -s /usr/lib/libphpcpp.a.1.5.4 /usr/lib/libphpcpp.a
+        fi
+        
+        #Trigger LDCONFIG
      	sudo ldconfig    
     ;;
 
