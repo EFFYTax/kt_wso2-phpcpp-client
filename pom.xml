@@ -142,7 +142,7 @@
                         <dependencies>
                             <dependency>
                                 <groupId>com.kroknet</groupId>
-                                <artifactId>kt_build-wso2</artifactId>
+                                <artifactId>kt-build-wso2</artifactId>
                                 <version>1.0.0-SNAPSHOT</version>
                             </dependency>
                         </dependencies>
