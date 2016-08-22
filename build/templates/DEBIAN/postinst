@@ -19,17 +19,22 @@ set -e
 
 case "$1" in
     configure)
-        #AXIS2 Fix broken symlinks
-    
+        #AXIS2 Fix broken symlink for shared lib in sandesha/c
+        #This is bad and normally would be fixed in the Sandesha/C makefile, however
+        #i do not have time for this, Sandesha2/c is ATTIC, so let's give ldconfig what is 
+        #looking for..
+        rm -rf /usr/local/axis2c/lib/libsandesha2.so.0
+        ln -s /usr/local/axis2c/lib/libsandesha2.so.0.0.0 /usr/local/axis2c/lib/libsandesha2.so.0
+        
         #PHPCPP Shared libs symlinks
         if [ -e libphpcpp.so.1.5.4 ]; then
-		    cp -f libphpcpp.so.1.5.4 /usr/lib/
+		cp -f libphpcpp.so.1.5.4 /usr/lib/
 	    	ln -f -s /usr/lib/libphpcpp.so.1.5.4 /usr/lib/libphpcpp.so.1.5
-		    ln -f -s /usr/lib/libphpcpp.so.1.5.4 /usr/lib/libphpcpp.so
-	    fi
+		ln -f -s /usr/lib/libphpcpp.so.1.5.4 /usr/lib/libphpcpp.so
+	fi
 	    
         if [ -e libphpcpp.a.1.5.4 ]; then cp -f libphpcpp.a.1.5.4 /usr/lib/
-		    ln -f -s /usr/lib/libphpcpp.a.1.5.4 /usr/lib/libphpcpp.a
+		ln -f -s /usr/lib/libphpcpp.a.1.5.4 /usr/lib/libphpcpp.a
         fi
         
         #Trigger LDCONFIG
