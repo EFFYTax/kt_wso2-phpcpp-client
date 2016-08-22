@@ -161,7 +161,7 @@
                            <executable>dpkg-deb</executable>
                            <arguments>
                               <argument>--build</argument>
-                              <argument>target/${package.name}-${package.version}_amd64/${package.name}-${package.version}_amd64</argument>
+                              <argument>target/${package.name}-${package.version}_amd64**/*</argument>
                            </arguments>
                         </configuration>
                      </execution>
