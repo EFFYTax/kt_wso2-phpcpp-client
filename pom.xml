@@ -100,11 +100,38 @@
             </timestampFormat>
                 </configuration>
             </plugin>
+            
+            <!-- 
+                This should be replaced by NAR artificat
+             -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <version>1.1</version>
+                <executions>
+                    <!-- 
+                        make
+                     -->
+                    <execution>
+                        <id>kt-wso2-shared-compilation</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <executable>make</executable>
+                            <arguments>
+                                <argument>all</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
     <profiles>
-        
         <profile>
             <id>package-deb</id>
             <build>
