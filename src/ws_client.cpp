@@ -162,9 +162,6 @@ void WSClient :: request() {
         axis2Client->setTimeout();
         axis2Client->setWSReliableOpts();
 
-        axis2_svc_client_set_options(
-                axis2Client->_svc_client.get(), axis2Client->env.get(),axis2Client-> _client_options.get());
-
         axis2Client->response.payload.reset(axis2_svc_client_send_receive (
                 axis2Client->_svc_client.get(), axis2Client->env.get(), axis2Client->_request_payload.get()));
 
