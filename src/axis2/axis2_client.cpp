@@ -811,11 +811,6 @@ void Axis2Client :: setTimeout()
             _client_options.get(), env.get(), 1000 * tansportOpts.timeout
     );
 
-    /**
-     * It seem's timeout is not working. 
-     */
-    axis2_svc_client_set_options(_svc_client.get(), env.get(), _client_options.get());
-    
     log("Setting Timeout > " + std::to_string(tansportOpts.timeout), __FILE__,__LINE__);
 }
 
