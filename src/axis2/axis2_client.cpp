@@ -807,10 +807,9 @@ void Axis2Client :: setWSAOpts() {
  */
 void Axis2Client :: setTimeout()
 {
-    /**
     axis2_options_set_timeout_in_milli_seconds(
             _client_options.get(), env.get(), 1000 * tansportOpts.timeout
-    ); **/
+    );
 
     log("Setting Timeout > " + std::to_string(tansportOpts.timeout), __FILE__,__LINE__);
 }
