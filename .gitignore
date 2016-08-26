@@ -81,3 +81,17 @@ Makefile.in
 
 /tests
 php
+.DS_Store
+._.DS_Store
+.cproject
+.project
+.settings/
+build/artifact/
+headers
+kt_axis2c
+kt_rampart
+kt_sandesha2
+kt_savan
+libboost
+test
+
