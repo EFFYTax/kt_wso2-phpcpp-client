@@ -464,6 +464,6 @@ the policy used is :
 
 
 #Credits 
- - Alexis Gruet <alexis.gruet@kroknet.com>
+ - Alexis Gruet
  - WSO2 team
  - PHP-CPP team
